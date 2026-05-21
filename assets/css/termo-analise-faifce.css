@@ -117,7 +117,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 /* ── PRINT ── */
 @media print{
   @page{size:A4 portrait;margin:0}
-  html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+  html,body{height:auto!important;overflow:visible!important;background:#fff!important;margin:0!important;padding:0!important}
   .layout,.workspace{display:block!important;height:auto!important;overflow:visible!important}
   .topbar,.fp,.pbadge,.mbg,.toast{display:none!important}
   .pp{display:block!important;overflow:visible!important;height:auto!important;background:#fff!important;padding:0!important;margin:0!important}
@@ -127,6 +127,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
     box-shadow:none!important;
     margin:0!important;
     padding:0!important;
+    box-sizing:border-box;
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important;
   }
@@ -135,11 +136,13 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
     position:fixed;
     top:0; left:0; right:0;
     background:#fff;
-    padding:8mm 14mm 3mm;
+    padding:6mm 14mm 3mm;
     z-index:100;
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important;
   }
+  .dlogo{height:48px;margin-bottom:4px}
+  .dtitle{font-size:12.5pt;margin-bottom:4px}
   /* RODAPÉ FIXO — repete em cada página */
   .dfoot{
     position:fixed;
@@ -148,18 +151,22 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
     right:0;
     width:210mm;
     background:#fff;
-    padding:3mm 14mm 5mm;
+    padding:3mm 14mm 4mm;
     margin:0!important;
     z-index:100;
     border-top:1px solid #ccc;
     box-sizing:border-box;
+    font-size:7pt;
+    line-height:1.4;
+    letter-spacing:0.01em;
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important;
   }
+  .dfoot br{display:block;line-height:1.4}
   /* CONTEÚDO — margem para não sobrepor cabeçalho/rodapé */
   .doc-body{
-    margin-top:5mm;
-    margin-bottom:16mm;
+    margin-top:18mm;
+    margin-bottom:20mm;
     padding:0 14mm;
   }
   /* Cores exatas em impressão */
@@ -168,5 +175,14 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
   /* Mantém a marca d'água fixa durante a impressão */
   #doc .wm{position:fixed!important;top:50%;left:50%;transform:translate(-50%,-50%)!important;width:507px;height:507px}
   /* Evita quebra dentro de linhas de tabela */
-  .dt tr, .dit tr{page-break-inside:avoid}
+  .dt tr, .dit tr,
+  .dt, .dit,
+  .dt tbody, .dit tbody,
+  .dt thead, .dit thead,
+  .dt tfoot, .dit tfoot{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+  .dt thead, .dit thead{display:table-header-group}
+  .dt tfoot, .dit tfoot{display:table-footer-group}
 }
