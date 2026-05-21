@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>FAIFCE — Termo de Análise Inicial</title>
-<link rel="stylesheet" href="termo-analise-faifce.css">
+<link rel="stylesheet" href="assets/css/termo-analise-faifce.css">
 </head>
 <body>
 <div class="layout">
@@ -34,13 +34,13 @@
 
   <div class="fg">
     <label>Número do Pedido de Compra</label>
-    <input type="text" id="f_num" placeholder="ex: 5484" oninput="upd()">
+    <input type="text" id="f_num" placeholder="ex: 5484" oninput="upd()" required>
     <div style="font-size:10px;color:var(--muted);margin-top:2px">Exibido como: n° [número]/2026/FAIFCE</div>
   </div>
 
   <div class="fg">
     <label>Projeto</label>
-    <input type="text" id="f_proj" placeholder="Nome do projeto" oninput="upd()">
+    <input type="text" id="f_proj" placeholder="Nome do projeto" oninput="upd()" required>
   </div>
 
   <div class="fg">
@@ -63,7 +63,7 @@
   <div class="fr2">
     <div class="fg">
       <label>Data prevista</label>
-      <input type="text" id="f_dtp" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()">
+      <input type="text" id="f_dtp" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required>
       <div class="ni-row">
         <input type="checkbox" id="ni_dtp" onchange="toggleNI('ni_dtp','f_dtp','d_dtp',false)">
         <span onclick="document.getElementById('ni_dtp').click()">Não informado</span>
@@ -71,7 +71,7 @@
     </div>
     <div class="fg">
       <label>Valor estimado</label>
-      <input type="text" id="f_vest" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vest">
+      <input type="text" id="f_vest" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vest" required>
       <div class="ni-row">
         <input type="checkbox" id="ni_vest" onchange="toggleNI('ni_vest','f_vest','d_vest',true)">
         <span onclick="document.getElementById('ni_vest').click()">Não informado</span>
@@ -82,25 +82,25 @@
   <div class="sl">Informações do Projeto</div>
 
   <div class="fr2">
-    <div class="fg"><label>Valor Total do Projeto</label><input type="text" id="f_vtp" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vtp"></div>
-    <div class="fg"><label>Valor Total Aportado</label><input type="text" id="f_vta" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vta"></div>
+    <div class="fg"><label>Valor Total do Projeto</label><input type="text" id="f_vtp" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vtp" required></div>
+    <div class="fg"><label>Valor Total Aportado</label><input type="text" id="f_vta" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vta" required></div>
   </div>
   <div class="fr2">
-    <div class="fg"><label>Valor disponível em conta</label><input type="text" id="f_vdc" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vdc"></div>
-    <div class="fg"><label>Aplicação Financeira</label><input type="text" id="f_vaf" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vaf"></div>
+    <div class="fg"><label>Valor disponível em conta</label><input type="text" id="f_vdc" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vdc" required></div>
+    <div class="fg"><label>Aplicação Financeira</label><input type="text" id="f_vaf" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vaf" required></div>
   </div>
   <div class="fr2">
-    <div class="fg"><label>Início da vigência</label><input type="text" id="f_iv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()"></div>
-    <div class="fg"><label>Término da vigência</label><input type="text" id="f_tv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()"></div>
+    <div class="fg"><label>Início da vigência</label><input type="text" id="f_iv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
+    <div class="fg"><label>Término da vigência</label><input type="text" id="f_tv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
   </div>
 
   <div class="fg">
     <label>Rubrica que atende ao pedido</label>
-    <input type="text" id="f_rub" placeholder="" oninput="upd()">
+    <input type="text" id="f_rub" placeholder="" oninput="upd()" required>
   </div>
   <div class="fr2">
-    <div class="fg"><label>Valor total atribuído à Rubrica</label><input type="text" id="f_vtr" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vtr"></div>
-    <div class="fg"><label>Saldo existente na Rubrica</label><input type="text" id="f_ser" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_ser"></div>
+    <div class="fg"><label>Valor total atribuído à Rubrica</label><input type="text" id="f_vtr" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vtr" required></div>
+    <div class="fg"><label>Saldo existente na Rubrica</label><input type="text" id="f_ser" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_ser" required></div>
   </div>
 
   <div class="sl">Subitens</div>
@@ -127,8 +127,8 @@
   </div>
 
   <div class="fr2" style="margin-top:10px">
-    <div class="fg"><label>Responsável pela análise</label><input type="text" id="f_resp" placeholder="Nome completo" oninput="upd()"></div>
-    <div class="fg"><label>Data</label><input type="text" id="f_data" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()"></div>
+    <div class="fg"><label>Responsável pela análise</label><input type="text" id="f_resp" placeholder="Nome completo" oninput="upd()" required></div>
+    <div class="fg"><label>Data</label><input type="text" id="f_data" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
   </div>
 
 </aside>
@@ -230,6 +230,6 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="termo-analise-faifce.js" defer></script>
+<script src="assets/js/termo-analise-faifce.js" defer></script>
 </body>
 </html>

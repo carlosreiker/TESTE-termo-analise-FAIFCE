@@ -1,0 +1,3 @@
+# Ignore documentation/license files if they are generated or should not be committed
+README.md
+LICENSE

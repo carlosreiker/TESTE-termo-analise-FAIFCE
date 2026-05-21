@@ -44,6 +44,9 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 .ift td{padding:2px 2px;border:1px solid var(--bd)}
 .ift td input[type=text]{padding:4px 5px;font-size:11px;border:none;width:100%;background:transparent;outline:none;font-family:inherit;color:#000!important}
 .ift td input[type=text]:focus{background:#f0fdf4}
+.ift td input[type=text]:invalid,
+.ift td input.invalid,
+.fg input.invalid{border:1px solid #c0392b;box-shadow:0 0 0 3px rgba(192,57,43,.12);background:#fff6f6}
 .ift td input[type=text]:disabled{background:#f0f0f0;color:#444!important;-webkit-text-fill-color:#444!important}
 .ift td.ni-cell{padding:2px 4px;vertical-align:middle}
 .ift td.ni-cell label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);cursor:pointer;white-space:nowrap}
@@ -65,6 +68,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 .format-btn{width:38px;display:inline-flex;justify-content:center;padding:6px 6px}
 .parecer-editor{width:100%;min-height:120px;padding:8px 9px;border:1px solid var(--bd);border-radius:4px;font-family:inherit;font-size:12px;color:var(--txt);line-height:1.55;outline:none;transition:border-color .15s,box-shadow .15s;white-space:pre-wrap;word-break:break-word}
 .parecer-editor:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(58,125,68,.1)}
+.parecer-editor.invalid{border-color:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,.12)}
 .parecer-editor b,.parecer-editor strong{font-weight:700}
 /* ── PREVIEW ── */
 .pp{overflow-y:auto;background:#ced2d9;display:flex;flex-direction:column;align-items:center;padding:20px 20px 50px;height:100%}
@@ -73,7 +77,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 /* ── A4 DOC ── */
 #doc{width:794px;min-height:1123px;background:#fff;box-shadow:0 4px 28px rgba(0,0,0,.18);padding:28px 44px 28px;position:relative;font-family:Arial,Helvetica,sans-serif;flex-shrink:0}
 .wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:507px;height:507px;background-size:contain;background-repeat:no-repeat;background-position:center;opacity:.05;pointer-events:none;z-index:0}
-#doc .wm{background-image:url('assets/logo marca dagua.png')}
+#doc .wm{background-image:url('../logo marca dagua.png')}
 #doc>*:not(.wm){position:relative;z-index:1}
 .dlogo{height:62px;width:auto;display:block;margin:0 auto 3px}
 .dtitle{font-size:13.5pt;font-weight:bold;text-align:center;margin-bottom:8px;letter-spacing:.02em}
@@ -109,6 +113,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:6px;font-size:12px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;max-width:280px}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{border-left:4px solid var(--ok)}
+.toast.error{border-left:4px solid #c0392b}
 /* ── PRINT ── */
 @media print{
   @page{size:A4 portrait;margin:0}

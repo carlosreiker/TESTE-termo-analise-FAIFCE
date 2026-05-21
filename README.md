@@ -2,7 +2,7 @@
 
 Site para preenchimento interativo do documento "Termo de Análise Inicial" dos pedidos de compra/serviços enviados ao setor de Projetos da FAIFCE.
 
-O arquivo `termo-analise-faifce.html` fornece:
+O arquivo `index.html` fornece:
 
 - Formulário de entrada de dados para pedido de compra, projeto, itens, subitens, valores e prazos.
 - Editor de parecer com formatação em negrito.
@@ -11,7 +11,7 @@ O arquivo `termo-analise-faifce.html` fornece:
 
 ## Como usar
 
-1. Abra `termo-analise-faifce.html` em um navegador.
+1. Abra `index.html` em um navegador.
 2. Preencha os campos do pedido, projeto e parecer.
 3. Use "Gerar PDF" para exportar o termo ou imprima diretamente a partir do navegador.
 4. Use "Resetar" para limpar todos os dados e começar novamente.

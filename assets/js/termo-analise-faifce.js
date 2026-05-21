@@ -139,7 +139,7 @@ function renderItems() {
       <td><input type="text" value="${esc(item.d)}" data-field="d" oninput="updateItem(event)" placeholder="Descrição do produto"></td>
       <td><input type="text" value="${esc(item.q)}" data-field="q" oninput="updateItem(event)"></td>
       <td><input type="text" value="${esc(item.u)}" data-field="u" oninput="updateItem(event)"></td>
-      <td><input type="text" value="${esc(item.v)}" data-field="v" oninput="mCurr(this); updateItem(event)" ${item.ni ? 'disabled' : ''}></td>
+      <td><input type="text" value="${esc(item.v)}" data-field="v" oninput="mCurr(this); updateItem(event)" ${item.ni ? 'disabled' : ''} required></td>
     </tr>
     <tr class="item-controls" data-id="${item.id}">
       <td colspan="4">
@@ -163,10 +163,10 @@ function renderSubs() {
     <div class="sb" data-id="${sub.id}">
       <button type="button" class="sdel" onclick="removeSub(${sub.id})" title="Remover subitem">×</button>
       <div class="sbn">Subitem</div>
-      <div class="fg"><label>Descrição do subitem</label><input type="text" value="${esc(sub.n)}" data-field="n" oninput="updateSub(event)"></div>
+      <div class="fg"><label>Descrição do subitem</label><input type="text" value="${esc(sub.n)}" data-field="n" oninput="updateSub(event)" required></div>
       <div class="fr2">
-        <div class="fg"><label>Valor total do Subitem</label><input type="text" value="${esc(sub.vt)}" data-field="vt" oninput="mCurr(this); updateSub(event)"></div>
-        <div class="fg"><label>Saldo existente no Subitem</label><input type="text" value="${esc(sub.vs)}" data-field="vs" oninput="mCurr(this); updateSub(event)"></div>
+        <div class="fg"><label>Valor total do Subitem</label><input type="text" value="${esc(sub.vt)}" data-field="vt" oninput="mCurr(this); updateSub(event)" required></div>
+        <div class="fg"><label>Saldo existente no Subitem</label><input type="text" value="${esc(sub.vs)}" data-field="vs" oninput="mCurr(this); updateSub(event)" required></div>
       </div>
     </div>
   `).join('');
@@ -180,6 +180,7 @@ function updateItem(event) {
   const field = input.dataset.field;
   const item = items.find(entry => entry.id === itemId);
   if (!item || !field) return;
+  input.classList.remove('invalid');
   item[field] = input.value;
   upd();
 }
@@ -201,6 +202,7 @@ function updateSub(event) {
   const field = input.dataset.field;
   const sub = subs.find(entry => entry.id === subId);
   if (!sub || !field) return;
+  input.classList.remove('invalid');
   sub[field] = input.value;
   upd();
 }
@@ -229,6 +231,7 @@ function toggleNI(checkboxId, fieldId, destId, isCurrency) {
   field.disabled = checkbox.checked;
   if (checkbox.checked) {
     field.value = '';
+    field.classList.remove('invalid');
     if (isCurrency && field.dataset.dest) {
       const target = document.getElementById(field.dataset.dest);
       if (target) target.textContent = '';
@@ -308,7 +311,33 @@ function checkTextState() {
   if (u) u.classList.toggle('active', isUnder);
 }
 
+function validateAll() {
+  const requiredInputs = [...document.querySelectorAll('.fp input[required]:not(:disabled)')];
+  let firstInvalid = null;
+  requiredInputs.forEach(input => {
+    if (!input.checkValidity() && !firstInvalid) firstInvalid = input;
+    input.classList.toggle('invalid', !input.checkValidity());
+  });
+
+  const parecer = document.getElementById('parecerEd');
+  const parecerEmpty = !parecer.textContent.trim();
+  parecer.classList.toggle('invalid', parecerEmpty);
+  if (!firstInvalid && parecerEmpty) {
+    firstInvalid = parecer;
+  }
+
+  if (firstInvalid) {
+    if (firstInvalid.focus) firstInvalid.focus();
+    showToast('Preencha todos os campos obrigatórios antes de gerar o PDF.', 'error');
+    return false;
+  }
+
+  return true;
+}
+
 function gerarPDF() {
+  if (!validateAll()) return;
+
   const number = document.getElementById('f_num').value.trim();
   const oldTitle = document.title;
   document.title = number ? `Termo_Analise_${number}_2026_FAIFCE` : 'Termo_Analise_FAIFCE';
@@ -331,12 +360,15 @@ function doReset() {
   closeModal();
   document.querySelectorAll('.fp input,.fp textarea').forEach(el => {
     el.value = '';
+    el.classList.remove('invalid');
     if (el.tagName === 'INPUT') el.disabled = false;
   });
   document.getElementById('ni_dtp').checked = false;
   document.getElementById('ni_vest').checked = false;
   document.getElementById('d_vest_wrap').textContent = 'R$ ';
-  document.getElementById('parecerEd').innerHTML = '';
+  const parecerEd = document.getElementById('parecerEd');
+  parecerEd.innerHTML = '';
+  parecerEd.classList.remove('invalid');
   items.length = 0;
   subs.length = 0;
   nextItemId = 1;
