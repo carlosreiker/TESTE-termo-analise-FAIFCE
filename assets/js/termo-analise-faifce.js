@@ -28,9 +28,11 @@ function init() {
 }
 
 function handleBeforeUnload(event) {
-  const dirty = [...document.querySelectorAll('.fp input,.fp textarea')].some(el => el.value.trim() !== '')
-    || items.length > 0 || subs.length > 0
-    || document.getElementById('parecerEd').textContent.trim() !== '';
+  const dirtyInputs = [...document.querySelectorAll('.fp input,.fp textarea')].some(el => el.value.trim() !== '');
+  const dirtyItems = items.some(item => item.ni || item.d.trim() !== '' || item.q.trim() !== '' || item.u.trim() !== '' || item.v.trim() !== '');
+  const dirtySubs = subs.some(sub => sub.n.trim() !== '' || sub.vt.trim() !== '' || sub.vs.trim() !== '');
+  const parecerDirty = document.getElementById('parecerEd').textContent.trim() !== '';
+  const dirty = dirtyInputs || dirtyItems || dirtySubs || parecerDirty;
 
   if (dirty) {
     event.preventDefault();
@@ -232,8 +234,8 @@ function toggleNI(checkboxId, fieldId, destId, isCurrency) {
   if (checkbox.checked) {
     field.value = '';
     field.classList.remove('invalid');
-    if (isCurrency && field.dataset.dest) {
-      const target = document.getElementById(field.dataset.dest);
+    if (isCurrency) {
+      const target = document.getElementById(destId || field.dataset.dest);
       if (target) target.textContent = '';
     }
   }
