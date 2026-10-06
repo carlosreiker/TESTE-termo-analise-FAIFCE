@@ -1,3 +1,8 @@
-# Ignore documentation/license files if they are generated or should not be committed
-README.md
-LICENSE
+# Rascunhos salvos pelo site contêm dados financeiros dos projetos: não versionar
+*.faifce.json
+
+# Arquivos de sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

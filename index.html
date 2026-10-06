@@ -16,6 +16,13 @@
     <div><div class="bt">Termo de Análise Inicial</div><div class="bs">FAIFCE — Pedido de Compra</div></div>
   </div>
   <div style="display:flex;gap:8px">
+    <button class="tbtn tg" onclick="document.getElementById('draftFile').click()" title="Abrir um rascunho salvo (.faifce.json)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>Abrir rascunho
+    </button>
+    <button class="tbtn tg" onclick="saveDraft()" title="Salvar rascunho (Ctrl+S)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar rascunho
+    </button>
+    <span class="tsep"></span>
     <button class="tbtn tr" onclick="confirmReset()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Resetar
     </button>
@@ -45,6 +52,7 @@
 
   <div class="fg">
     <label>Itens da Solicitação</label>
+    <div class="items-alert" id="itemsAlert" role="status" hidden></div>
     <table class="ift" id="ift">
       <thead><tr>
         <th style="width:38%">Produto / Descrição</th>
@@ -54,10 +62,17 @@
       </tr></thead>
       <tbody id="itbody"></tbody>
     </table>
-    <button class="badd" onclick="addItem()">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Inserir mais um item
-    </button>
+    <div class="item-action-row">
+      <button class="badd" type="button" onclick="addItem()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Inserir mais um item
+      </button>
+      <button class="badd badd-import" id="itemImageDropButton" type="button" onclick="openItemImageImport()" title="Anexe, cole (Ctrl+V) ou arraste prints da tabela de itens">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        Importar itens por imagem
+      </button>
+    </div>
+    <div class="import-help">Anexe, cole (<b>Ctrl+V</b>) ou arraste um ou mais prints. O sistema lê Produto, Quantidade, Unidade e Valor Unitário Sugerido, ignora as demais colunas e marca o que precisa de conferência. Depois use as setas ▲▼ para reordenar os itens.</div>
   </div>
 
   <div class="fr2">
@@ -71,10 +86,14 @@
     </div>
     <div class="fg">
       <label>Valor estimado</label>
-      <input type="text" id="f_vest" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vest" required>
+      <input type="text" id="f_vest" placeholder="R$ 0,00" oninput="mCurr(this); onVestInput(); upd()" data-dest="d_vest" required>
       <div class="ni-row">
         <input type="checkbox" id="ni_vest" onchange="toggleNI('ni_vest','f_vest','d_vest',true)">
         <span onclick="document.getElementById('ni_vest').click()">Não informado</span>
+      </div>
+      <div class="ve-status" id="ve_status" data-mode="auto">
+        <span id="ve_status_txt">Soma automática dos itens</span>
+        <button type="button" id="ve_recalc" onclick="resumeAuto()" hidden>Voltar ao automático</button>
       </div>
     </div>
   </div>
@@ -94,14 +113,12 @@
     <div class="fg"><label>Término da vigência</label><input type="text" id="f_tv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
   </div>
 
-  <div class="fg">
-    <label>Rubrica que atende ao pedido</label>
-    <input type="text" id="f_rub" placeholder="" oninput="upd()" required>
-  </div>
-  <div class="fr2">
-    <div class="fg"><label>Valor total atribuído à Rubrica</label><input type="text" id="f_vtr" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vtr" required></div>
-    <div class="fg"><label>Saldo existente na Rubrica</label><input type="text" id="f_ser" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_ser" required></div>
-  </div>
+  <div class="sl">Rubricas</div>
+  <div id="rubcon"></div>
+  <button class="badd" onclick="addRubric()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Inserir mais uma rubrica
+  </button>
 
   <div class="sl">Subitens</div>
   <div id="subcon"></div>
@@ -142,7 +159,7 @@
 
     <!-- CABEÇALHO (fixo na impressão) -->
     <div class="doc-header">
-      <img class="dlogo" id="doclogo" src="assets/logo oficial.png" alt="FAIFCE">
+      <img class="dlogo" id="doclogo" src="assets/img/logo-oficial.png" alt="FAIFCE">
       <div class="dtitle">TERMO DE ANÁLISE INICIAL</div>
     </div>
 
@@ -154,20 +171,23 @@
       <tr><th class="sh" colspan="2">Informações do Pedido</th></tr>
       <tr><td colspan="2"><b>Pedido de Compra n°</b> <span id="d_num"></span>/2026/FAIFCE</td></tr>
       <tr><td colspan="2"><b>Projeto:</b> <span id="d_proj"></span></td></tr>
-      <tr>
-        <td colspan="2" style="padding:4px 6px">
-          <b>Solicitação:</b>
-          <table class="dit" style="margin-top:4px">
-            <thead><tr>
-              <th style="width:44%;text-align:center">Produto</th>
-              <th style="width:13%">Quantidade</th>
-              <th style="width:14%">Unidade</th>
-              <th style="width:29%">Valor Unitário Sugerido</th>
-            </tr></thead>
-            <tbody id="d_itbody"></tbody>
-          </table>
-        </td>
-      </tr>
+    </table>
+
+    <!-- ITENS EM TABELA INDEPENDENTE PARA PERMITIR QUEBRA ENTRE PÁGINAS -->
+    <div class="items-section">
+      <b>Solicitação:</b>
+      <table class="dit">
+        <thead><tr>
+          <th style="width:44%;text-align:center">Produto</th>
+          <th style="width:13%">Quantidade</th>
+          <th style="width:14%">Unidade</th>
+          <th style="width:29%">Valor Unitário Sugerido</th>
+        </tr></thead>
+        <tbody id="d_itbody"></tbody>
+      </table>
+    </div>
+
+    <table class="dt">
       <tr>
         <td style="width:50%"><b>Data prevista:</b> <span id="d_dtp"></span></td>
         <td style="width:50%"><b>Valor estimado:</b> <span id="d_vest_wrap">R$ </span><span id="d_vest"></span></td>
@@ -185,11 +205,7 @@
         <td><b>Início vigência:</b> <span id="d_iv"></span></td>
         <td><b>Término vigência:</b> <span id="d_tv"></span></td>
       </tr>
-      <tr><td colspan="2"><b>Rubrica que atende ao pedido:</b> <span id="d_rub"></span></td></tr>
-      <tr>
-        <td><b>Valor total atribuído à Rubrica:</b><br>R$ <span id="d_vtr"></span></td>
-        <td><b>Saldo existente na Rubrica:</b><br>R$ <span id="d_ser"></span></td>
-      </tr>
+      <tbody id="d_rubbody"></tbody>
       <tbody id="d_subbody"></tbody>
     </table>
 
@@ -228,8 +244,86 @@
     </div>
   </div>
 </div>
+<div class="mbg" id="mOpen">
+  <div class="mbox">
+    <div class="mi">📂</div>
+    <div class="mt">Abrir rascunho?</div>
+    <div class="mm">Há alterações não salvas no formulário. Ao abrir <b id="mOpenName"></b>, elas serão substituídas.</div>
+    <div class="ma">
+      <button class="mc" onclick="closeOpenModal()">Cancelar</button>
+      <button class="mf" onclick="confirmOpenDraft()">Substituir e abrir</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="draftFile" accept=".json,application/json" hidden onchange="onDraftFile(this)">
+<!-- MODAL DE IMPORTAÇÃO POR IMAGEM -->
+<div class="mbg" id="mImageImport">
+  <div class="mbox ocr-box" role="dialog" aria-modal="true" aria-labelledby="ocrTitle">
+    <div class="mt" id="ocrTitle">Importar itens por imagem</div>
+    <div class="mm" id="ocrStatus">Anexe ou cole um ou mais prints da tabela. Formatos aceitos: PNG, JPG/JPEG e WEBP.</div>
+
+    <div class="ocr-dropzone" id="ocrDropzone">
+      <div class="ocr-drop-title">Arraste os prints para cá, anexe ou cole</div>
+      <div class="ocr-drop-sub">Só as colunas Produto, Quantidade, Unidade e Valor Unitário Sugerido são aproveitadas; o restante é ignorado.</div>
+      <div class="ocr-actions">
+        <button type="button" class="ocr-btn" id="ocrAttachBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          Anexar imagens
+        </button>
+        <button type="button" class="ocr-btn sec" id="ocrPasteBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          Colar imagem
+        </button>
+      </div>
+      <div class="ocr-drop-meta">Também funciona com <b>Ctrl+V</b> (⌘+V no Mac). Várias imagens por vez • até 10 MB cada</div>
+      <input type="file" id="ocrFileInput" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    </div>
+
+    <div class="ocr-progress-wrap" id="ocrProgressWrap" hidden>
+      <div class="ocr-progress"><div class="ocr-progress-bar" id="ocrProgressBar"></div></div>
+      <div class="ocr-progress-text" id="ocrProgressText">0%</div>
+    </div>
+
+    <div class="ocr-preview" id="ocrPreviewWrap" hidden>
+      <div id="ocrImageQueue" class="ocr-image-queue"></div>
+    </div>
+
+    <div class="ocr-summary" id="ocrSummary" hidden></div>
+
+    <div class="ocr-toolbar" id="ocrToolbar" hidden>
+      <div id="ocrCount"></div>
+      <div class="ocr-toolbar-right">
+        <button type="button" class="ocr-btn warn" id="ocrDupBtn" hidden>Remover repetidos</button>
+        <label><input type="checkbox" id="ocrOnlyProblems"> Mostrar só linhas com aviso</label>
+      </div>
+    </div>
+
+    <div class="ocr-table-wrap" id="ocrTableWrap" hidden>
+      <table class="ocr-table">
+        <thead><tr><th>#</th><th>Produto / Descrição</th><th>Qtd</th><th>Unidade</th><th>Valor Unit. Sugerido</th><th></th></tr></thead>
+        <tbody id="ocrRows"></tbody>
+      </table>
+    </div>
+
+    <div class="ocr-choice" id="ocrChoice" hidden>
+      <div id="ocrChoiceText"></div>
+      <div class="ocr-choice-actions">
+        <button type="button" class="ocr-btn" id="ocrChoiceAppend">Acrescentar abaixo dos atuais</button>
+        <button type="button" class="ocr-btn warn" id="ocrChoiceReplace">Substituir todos os itens</button>
+        <button type="button" class="mc" id="ocrChoiceBack">Voltar</button>
+      </div>
+    </div>
+
+    <div class="ma ocr-actions-final">
+      <button class="mc" type="button" onclick="closeItemImageImport()">Cancelar</button>
+      <button class="ocr-confirm" type="button" id="ocrConfirmBtn" onclick="confirmItemImageImport()" disabled>Inserir itens na tabela</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
+<script src="assets/js/leitor-itens-imagem.js" defer></script>
 <script src="assets/js/termo-analise-faifce.js" defer></script>
 </body>
 </html>
