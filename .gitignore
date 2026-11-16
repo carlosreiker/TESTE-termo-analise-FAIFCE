@@ -1,0 +1,8 @@
+# Rascunhos salvos pelo site contêm dados financeiros dos projetos: não versionar
+*.faifce.json
+
+# Arquivos de sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

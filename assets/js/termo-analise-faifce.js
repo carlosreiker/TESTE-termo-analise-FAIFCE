@@ -36,6 +36,8 @@ function init() {
     if (event.target === this) closeModal();
   });
 
+  ['input', 'change', 'click'].forEach(ev => document.addEventListener(ev, scheduleEmailButton));
+  updateEmailButton();
   document.getElementById('mEmail').addEventListener('click', function(event) {
     if (event.target === this) closeEmailModal();
   });
@@ -61,6 +63,7 @@ function handleBeforeUnload(event) {
 }
 
 function upd() {
+  if (typeof scheduleEmailButton === 'function') scheduleEmailButton();
   if (typeof scheduleDraftData === 'function') scheduleDraftData();
   syncFields.forEach(([sourceId, targetId]) => {
     const source = document.getElementById(sourceId);
@@ -572,6 +575,21 @@ function checkTextState() {
   if (u) u.classList.toggle('active', isUnder);
 }
 
+/* Verifica (sem mensagens nem marcações) se todos os campos obrigatórios estão preenchidos; controla o botão "Enviar e-mail". */
+function isFormValid() {
+  const ok = [...document.querySelectorAll('.fp input[required]:not(:disabled)')].every(i => i.checkValidity());
+  return ok && !!document.getElementById('parecerEd').textContent.trim();
+}
+function updateEmailButton() {
+  const b = document.getElementById('btnEmail');
+  if (!b) return;
+  const ok = isFormValid();
+  b.disabled = !ok;
+  b.title = ok ? 'Abrir um rascunho de e-mail no Gmail com os dados do pedido' : 'Preencha todos os campos obrigatórios para habilitar o envio por e-mail';
+}
+let emailBtnTimer = null;
+function scheduleEmailButton() { clearTimeout(emailBtnTimer); emailBtnTimer = setTimeout(updateEmailButton, 80); }
+
 function validateAll() {
   const requiredInputs = [...document.querySelectorAll('.fp input[required]:not(:disabled)')];
   let firstInvalid = null;
@@ -1015,9 +1033,7 @@ function emailParts() {
     linkLine,
     '',
     t('Aguardo sua devolutiva para podermos dar continuidade aos próximos passos relacionados ao pedido de compras.'),
-    '',   // duas linhas em branco antes do fecho; a assinatura vem do próprio Gmail
-    '',
-    t('Atenciosamente,'),
+    '',   // duas linhas em branco; o "Atenciosamente," e a imagem vêm da assinatura do próprio Gmail
     '',
   ];
   const id = x => x;
@@ -1035,15 +1051,9 @@ function renderEmailPreview() {
 }
 
 function openEmailModal() {
-  const num = document.getElementById('f_num'), proj = document.getElementById('f_proj');
-  const missing = [num, proj].find(el => !el.value.trim());
-  if (missing) {
-    missing.classList.add('invalid'); missing.focus();
-    showToast('Preencha o número do pedido e o projeto para montar o e-mail.', 'error');
-    return;
-  }
+  if (!validateAll()) return;
   renderEmailPreview();
-  document.getElementById('em_projname').textContent = proj.value.trim();
+  document.getElementById('em_projname').textContent = document.getElementById('f_proj').value.trim();
   document.getElementById('mEmail').classList.add('show');
 }
 function closeEmailModal() { document.getElementById('mEmail').classList.remove('show'); }
@@ -1066,8 +1076,7 @@ function openGmailDraft() {
   if (!checkEmailLink(e)) return;
   try { navigator.clipboard.writeText(e.proj).catch(() => {}); } catch (err) { /* sem permissão: o nome continua visível no passo a passo */ }
   window.open(gmailUrl(e.subject, e.body), '_blank', 'noopener');
-  closeEmailModal();
-  showToast(e.link ? '✉️ Rascunho aberto no Gmail. Anexe o PDF e informe os destinatários.' : '✉️ Rascunho aberto. Nome do projeto copiado: use-o ao inserir a pasta pelo Google Drive.', 'ok');
+  showToast('✉️ Rascunho aberto no Gmail. Nome do projeto copiado; falta a assinatura, a pasta e o PDF.', 'ok');
 }
 
 // Opção 2 (negrito real): copia o corpo formatado (HTML) e abre o Gmail só com o assunto; o usuário cola no corpo (Ctrl+V).
@@ -1085,8 +1094,7 @@ async function openGmailRichDraft() {
     return;
   }
   window.open(gmailUrl(e.subject, ''), '_blank', 'noopener');
-  closeEmailModal();
-  showToast('📋 Texto copiado. No Gmail, clique no corpo do e-mail e cole com Ctrl+V.', 'ok');
+  showToast('📋 Texto copiado. No Gmail, clique no corpo do e-mail (acima da assinatura) e cole com Ctrl+V.', 'ok');
 }
 
 window.addEventListener('DOMContentLoaded', init);

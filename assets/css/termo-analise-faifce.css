@@ -130,6 +130,7 @@ html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;bac
 .em-go{background:var(--green)}.em-go:hover{background:#2e6636}
 input[type=date]{font-family:inherit;cursor:pointer}
 #draftData{display:none}
+.tbtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
 /* ── TOAST ── */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:6px;font-size:12px;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;max-width:280px}
 .toast.show{transform:translateY(0);opacity:1}

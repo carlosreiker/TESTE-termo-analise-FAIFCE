@@ -57,13 +57,14 @@ JSON legível, com `formato: "faifce-termo-analise"` e `versao: 2`. Ao abrir, o 
 
 ## Enviar e-mail (Gmail)
 
-O botão **Enviar e-mail** pede o número do pedido e o projeto e abre o Gmail com um rascunho (assunto "Termo de Análise - Pedido de Compra n° {nº}/2026" e corpo-modelo). O nome do projeto é copiado para a área de transferência. Depois, no Gmail:
+O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela mostra o passo a passo e fica aberta enquanto você usa o Gmail:
 
-1. Ícone do **Google Drive** › Inserir arquivos com o Google Drive; pesquise **1. ATIVOS** e abra a pasta do projeto.
-2. Selecione **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
-3. Anexe o PDF do termo e informe os destinatários.
+1. **Gerar PDF** e salvar o arquivo.
+2. **Abrir Gmail com assinatura**: copia o texto do e-mail (com negrito real no nº do pedido e no projeto) e abre o Gmail só com o assunto, para ele inserir a sua assinatura padrão. Clique no corpo (acima da assinatura) e cole com Ctrl+V.
+3. Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
+4. Anexe o PDF e informe os destinatários.
 
-Limites: o Gmail não deixa um site anexar arquivos nem inserir a pasta do Drive; esses dois passos são manuais. Se já tiver o link da pasta, pode colá-lo no campo opcional da janela e ele entra no corpo do e-mail. O texto do e-mail vai sem negrito.
+Limites: o Gmail não deixa um site anexar arquivos nem inserir a pasta do Drive (só por API com login Google, não adotada). Existe também a alternativa de um clique (rascunho já preenchido por link), mas nela o Gmail não insere a assinatura e o negrito é apenas visual. O "Atenciosamente," vem da própria assinatura do Gmail.
 
 ## Publicação
 
