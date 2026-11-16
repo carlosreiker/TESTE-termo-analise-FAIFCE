@@ -987,22 +987,45 @@ function applyDraft(d, name) {
    ══════════════════════════════════════════════════════════════ */
 const LINK_PLACEHOLDER = '[ANEXAR A PASTA "01 | INSTRUMENTOS JURÍDICOS" COMO LINK: ícone do Google Drive > pesquisar "1. ATIVOS" > abrir a pasta do projeto > selecionar "01 | Instrumentos Jurídicos" > Adicionar como link. Depois apague esta linha]';
 
+/* Negrito "visual" para o Gmail: a URL de rascunho só aceita texto simples, então letras e números são trocados
+   pelos caracteres Unicode em negrito (𝗔𝗯𝗰 𝟭𝟮𝟯); acentos viram marcas combinantes sobre a letra em negrito. */
+function toBoldUnicode(str) {
+  return String(str).normalize('NFD').replace(/[A-Za-z0-9]/g, ch => {
+    const c = ch.charCodeAt(0);
+    if (c >= 65 && c <= 90) return String.fromCodePoint(0x1D5D4 + c - 65);
+    if (c >= 97 && c <= 122) return String.fromCodePoint(0x1D5EE + c - 97);
+    return String.fromCodePoint(0x1D7EC + c - 48);
+  }).normalize('NFC');
+}
+function escHtml(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
 function emailParts() {
   const num = document.getElementById('f_num').value.trim();
   const proj = document.getElementById('f_proj').value.trim();
   const link = (document.getElementById('em_link').value || '').trim();
   const numTxt = num ? `${num}/2026` : '[N° DO PEDIDO]';
+  const projTxt = proj || '[NOME DO PROJETO]';
   const subject = `Termo de Análise - Pedido de Compra n° ${numTxt}`;
-  const body = [
-    'Prezados mentores!',
+  // t = texto comum, b = trecho em negrito; as mesmas linhas servem para as 3 versões (Unicode, HTML e texto simples)
+  const mk = (t, b, linkLine) => [
+    t('Prezados mentores!'),
     '',
-    `Encaminho, para sua análise e conhecimento, em anexo, o Termo de Análise n.º ${numTxt}, referente ao projeto ${proj || '[NOME DO PROJETO]'} e o termo de referência também o qual foi anexado a este pedido no sistema Conveniar.`,
-    'Segue link da pasta contendo a documentação do projeto:',
-    link || LINK_PLACEHOLDER,
+    t('Encaminho, para sua análise e conhecimento, em anexo, o Termo de Análise n.º ') + b(numTxt) + t(', referente ao projeto ') + b(projTxt) + t(' e o termo de referência também o qual foi anexado a este pedido no sistema Conveniar.'),
+    t('Segue link da pasta contendo a documentação do projeto:'),
+    linkLine,
     '',
-    'Aguardo sua devolutiva para podermos dar continuidade aos próximos passos relacionados ao pedido de compras.',
-  ].join('\n');
-  return { subject, body, num, proj, link };
+    t('Aguardo sua devolutiva para podermos dar continuidade aos próximos passos relacionados ao pedido de compras.'),
+    '',   // duas linhas em branco antes do fecho; a assinatura vem do próprio Gmail
+    '',
+    t('Atenciosamente,'),
+    '',
+  ];
+  const id = x => x;
+  const body = mk(id, toBoldUnicode, link || LINK_PLACEHOLDER).join('\n');
+  const plain = mk(id, id, link || LINK_PLACEHOLDER).join('\n');
+  const linkHtml = link ? `<a href="${escHtml(link)}">${escHtml(link)}</a>` : `<b>${escHtml(LINK_PLACEHOLDER)}</b>`;
+  const html = mk(escHtml, x => `<b>${escHtml(x)}</b>`, linkHtml).map(l => l === '' ? '<div><br></div>' : `<div>${l}</div>`).join('');
+  return { subject, body, plain, html, num, proj, link };
 }
 
 function renderEmailPreview() {
@@ -1025,18 +1048,45 @@ function openEmailModal() {
 }
 function closeEmailModal() { document.getElementById('mEmail').classList.remove('show'); }
 
-function openGmailDraft() {
-  const e = emailParts();
+function checkEmailLink(e) {
   if (e.link && !/^https:\/\/(drive|docs)\.google\.com\//i.test(e.link)) {
     showToast('O link deve ser do Google Drive (https://drive.google.com/…).', 'error');
     document.getElementById('em_link').focus();
-    return;
+    return false;
   }
+  return true;
+}
+function gmailUrl(subject, body) {
+  return 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=' + encodeURIComponent(subject) + (body ? '&body=' + encodeURIComponent(body) : '');
+}
+
+// Opção 1 (um clique): corpo preenchido; número e projeto em "negrito" Unicode.
+function openGmailDraft() {
+  const e = emailParts();
+  if (!checkEmailLink(e)) return;
   try { navigator.clipboard.writeText(e.proj).catch(() => {}); } catch (err) { /* sem permissão: o nome continua visível no passo a passo */ }
-  const url = 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=' + encodeURIComponent(e.subject) + '&body=' + encodeURIComponent(e.body);
-  window.open(url, '_blank', 'noopener');
+  window.open(gmailUrl(e.subject, e.body), '_blank', 'noopener');
   closeEmailModal();
   showToast(e.link ? '✉️ Rascunho aberto no Gmail. Anexe o PDF e informe os destinatários.' : '✉️ Rascunho aberto. Nome do projeto copiado: use-o ao inserir a pasta pelo Google Drive.', 'ok');
+}
+
+// Opção 2 (negrito real): copia o corpo formatado (HTML) e abre o Gmail só com o assunto; o usuário cola no corpo (Ctrl+V).
+async function openGmailRichDraft() {
+  const e = emailParts();
+  if (!checkEmailLink(e)) return;
+  try {
+    const item = new ClipboardItem({
+      'text/html': new Blob([e.html], { type: 'text/html' }),
+      'text/plain': new Blob([e.plain], { type: 'text/plain' }),
+    });
+    await navigator.clipboard.write([item]);
+  } catch (err) {
+    showToast('Este navegador não permitiu copiar o texto formatado. Use o botão de um clique.', 'error');
+    return;
+  }
+  window.open(gmailUrl(e.subject, ''), '_blank', 'noopener');
+  closeEmailModal();
+  showToast('📋 Texto copiado. No Gmail, clique no corpo do e-mail e cole com Ctrl+V.', 'ok');
 }
 
 window.addEventListener('DOMContentLoaded', init);

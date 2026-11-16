@@ -285,7 +285,12 @@
     </div>
     <div class="ma">
       <button class="mc" onclick="closeEmailModal()">Cancelar</button>
-      <button class="mf em-go" onclick="openGmailDraft()">Copiar nome do projeto e abrir o Gmail</button>
+      <button class="mf em-go" onclick="openGmailDraft()">Abrir rascunho no Gmail</button>
+    </div>
+    <div class="em-help" style="margin-top:8px">
+      O Gmail não aceita negrito de verdade em rascunhos abertos por link: neste botão o número do pedido e o nome do projeto saem em <b>negrito visual</b> (𝗮𝘀𝘀𝗶𝗺). Se preferir negrito real,
+      <button type="button" class="linkbtn" onclick="openGmailRichDraft()">copiar o texto formatado e abrir o Gmail em branco</button> (depois é só colar no corpo com Ctrl+V).
+      A assinatura é inserida pelo próprio Gmail, se estiver definida como padrão para novos e-mails.
     </div>
   </div>
 </div>
