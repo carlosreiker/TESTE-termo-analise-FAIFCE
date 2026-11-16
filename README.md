@@ -19,10 +19,12 @@ LICENSE
 ## Como usar
 
 1. Abra `index.html` em um navegador.
-2. Preencha os campos do pedido, projeto, itens, subitens e parecer.
+2. Preencha os campos do pedido, projeto, itens, subitens e parecer. Em cada rubrica e subitem há o campo opcional **Meta/Etapa**, que só aparece no documento quando preenchido.
 3. **Valor estimado**: é a soma de `Quantidade × Valor Unitário` de cada item, atualizada ao vivo. Pode ser editado à mão; nesse caso o campo mostra a soma dos itens e o botão "Voltar ao automático".
-4. **Gerar PDF** abre a impressão do navegador com o termo em A4.
-5. **Resetar** limpa todos os dados.
+4. **Datas**: os campos de data abrem um calendário ao clicar. A data da análise (ao lado do responsável) vem preenchida com o dia de hoje e pode ser alterada.
+5. **Gerar PDF** abre a impressão do navegador com o termo em A4 (margem de 10 mm em cima/embaixo e 12 mm nas laterais). O PDF carrega, em texto invisível, os dados do preenchimento (veja "Rascunhos").
+6. **Enviar e-mail**: abre um rascunho no Gmail com o modelo e os dados do pedido (veja abaixo).
+7. **Resetar** limpa todos os dados.
 
 ## Importar itens por imagem (prints)
 
@@ -39,7 +41,8 @@ O reconhecimento roda no navegador (Tesseract.js): as imagens não são enviadas
 ## Rascunhos (trabalho em equipe)
 
 - **Salvar rascunho** (ou `Ctrl+S`) baixa um arquivo `Termo_<número>_2026.faifce.json` com todo o preenchimento.
-- **Abrir rascunho** carrega um arquivo desse tipo de volta no formulário. Se houver alterações não salvas, o site pede confirmação antes de substituir.
+- **Abrir rascunho** aceita o arquivo `.faifce.json` **ou um Termo de Análise em PDF gerado por este site** (o PDF traz os dados embutidos; PDFs gerados antes desta versão ou por outros programas não podem ser abertos). A leitura do PDF precisa de internet na primeira vez (baixa o pdf.js).
+  Carrega o conteúdo de volta no formulário. Se houver alterações não salvas, o site pede confirmação antes de substituir.
 - O aviso ao fechar a aba só aparece quando há alterações desde o último salvamento ou abertura.
 
 Sugestão de rotina para a equipe:
@@ -50,7 +53,21 @@ Sugestão de rotina para a equipe:
 
 ### Formato do arquivo
 
-JSON legível, com `formato: "faifce-termo-analise"` e `versao: 1`. Ao abrir, o site valida o arquivo e descarta o que não reconhece. No campo Parecer só são mantidos negrito, itálico, sublinhado e quebras de linha. Mudanças futuras no formato aumentam o número de `versao`; rascunhos antigos continuam abrindo.
+JSON legível, com `formato: "faifce-termo-analise"` e `versao: 2`. Ao abrir, o site valida o arquivo e descarta o que não reconhece. No campo Parecer só são mantidos negrito, itálico, sublinhado e quebras de linha. Mudanças futuras no formato aumentam o número de `versao`; rascunhos antigos continuam abrindo.
+
+## Enviar e-mail (Gmail)
+
+O botão **Enviar e-mail** pede o número do pedido e o projeto e abre o Gmail com um rascunho (assunto "Termo de Análise - Pedido de Compra n° {nº}/2026" e corpo-modelo). O nome do projeto é copiado para a área de transferência. Depois, no Gmail:
+
+1. Ícone do **Google Drive** › Inserir arquivos com o Google Drive; pesquise **1. ATIVOS** e abra a pasta do projeto.
+2. Selecione **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
+3. Anexe o PDF do termo e informe os destinatários.
+
+Limites: o Gmail não deixa um site anexar arquivos nem inserir a pasta do Drive; esses dois passos são manuais. Se já tiver o link da pasta, pode colá-lo no campo opcional da janela e ele entra no corpo do e-mail. O texto do e-mail vai sem negrito.
+
+## Publicação
+
+Veja `DEPLOY.md` (Vercel: produção na branch `main` e teste na branch `teste`).
 
 ## Objetivo
 

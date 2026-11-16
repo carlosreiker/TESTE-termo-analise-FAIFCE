@@ -16,11 +16,14 @@
     <div><div class="bt">Termo de Análise Inicial</div><div class="bs">FAIFCE — Pedido de Compra</div></div>
   </div>
   <div style="display:flex;gap:8px">
-    <button class="tbtn tg" onclick="document.getElementById('draftFile').click()" title="Abrir um rascunho salvo (.faifce.json)">
+    <button class="tbtn tg" onclick="document.getElementById('draftFile').click()" title="Abrir um rascunho salvo (.faifce.json) ou um Termo de Análise em PDF gerado por este site">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>Abrir rascunho
     </button>
     <button class="tbtn tg" onclick="saveDraft()" title="Salvar rascunho (Ctrl+S)">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar rascunho
+    </button>
+    <button class="tbtn tg" onclick="openEmailModal()" title="Abrir um rascunho de e-mail no Gmail com os dados do pedido">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Enviar e-mail
     </button>
     <span class="tsep"></span>
     <button class="tbtn tr" onclick="confirmReset()">
@@ -78,7 +81,7 @@
   <div class="fr2">
     <div class="fg">
       <label>Data prevista</label>
-      <input type="text" id="f_dtp" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required>
+      <input type="date" id="f_dtp" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required>
       <div class="ni-row">
         <input type="checkbox" id="ni_dtp" onchange="toggleNI('ni_dtp','f_dtp','d_dtp',false)">
         <span onclick="document.getElementById('ni_dtp').click()">Não informado</span>
@@ -109,8 +112,8 @@
     <div class="fg"><label>Aplicação Financeira</label><input type="text" id="f_vaf" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vaf" required></div>
   </div>
   <div class="fr2">
-    <div class="fg"><label>Início da vigência</label><input type="text" id="f_iv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
-    <div class="fg"><label>Término da vigência</label><input type="text" id="f_tv" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
+    <div class="fg"><label>Início da vigência</label><input type="date" id="f_iv" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
+    <div class="fg"><label>Término da vigência</label><input type="date" id="f_tv" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
   </div>
 
   <div class="sl">Rubricas</div>
@@ -145,7 +148,7 @@
 
   <div class="fr2" style="margin-top:10px">
     <div class="fg"><label>Responsável pela análise</label><input type="text" id="f_resp" placeholder="Nome completo" oninput="upd()" required></div>
-    <div class="fg"><label>Data</label><input type="text" id="f_data" placeholder="dd/mm/aaaa" oninput="formatDate(this); upd()" required></div>
+    <div class="fg"><label>Data</label><input type="date" id="f_data" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
   </div>
 
 </aside>
@@ -227,6 +230,7 @@
       CIÊNCIA E TECNOLOGIA DO CEARÁ – FAIFCE<br>
       CNPJ 27.652.712/0001-41 &nbsp;·&nbsp; Rua Nogueira Acióli, 621 - A, Aldeota, CEP 60.110-140 - Fortaleza/CE
     </div>
+    <div id="draftData" aria-hidden="true"></div><!-- dados do rascunho: aparecem só na impressão (texto invisível) -->
   </div><!-- /doc -->
 </main>
 </div><!-- /workspace -->
@@ -255,7 +259,37 @@
     </div>
   </div>
 </div>
-<input type="file" id="draftFile" accept=".json,application/json" hidden onchange="onDraftFile(this)">
+<!-- MODAL DE E-MAIL -->
+<div class="mbg" id="mEmail">
+  <div class="mbox email-box" role="dialog" aria-modal="true" aria-labelledby="emTitle">
+    <div class="mi">✉️</div>
+    <div class="mt" id="emTitle">Enviar Termo por e-mail (Gmail)</div>
+    <div class="mm">Abre o Gmail com o rascunho já preenchido. Faltam: a pasta do Drive, o PDF do termo e os destinatários.</div>
+    <div class="fg"><label>Passo a passo no Gmail (depois de abrir o rascunho)</label>
+      <ol class="em-steps">
+        <li>No rascunho, clique no ícone do <b>Google Drive</b> (barra inferior) › <b>Inserir arquivos com o Google Drive</b>. O nome do projeto já foi copiado: é só colar na busca.</li>
+        <li>Pesquise <b>1. ATIVOS</b> e abra a pasta.</li>
+        <li>Abra a pasta do projeto: <b id="em_projname"></b></li>
+        <li>Selecione a pasta <b>01 | Instrumentos Jurídicos</b> e clique em <b>Adicionar como link</b>.</li>
+        <li>Apague a linha de instrução entre colchetes, anexe o PDF do termo e informe os destinatários.</li>
+      </ol>
+    </div>
+    <div class="fg">
+      <label>Opcional: já tem o link da pasta? Cole aqui</label>
+      <input type="text" id="em_link" placeholder="https://drive.google.com/drive/folders/…" oninput="renderEmailPreview()">
+      <div class="em-help">Se colar o link, ele entra no corpo do e-mail no lugar da linha de instrução.</div>
+    </div>
+    <div class="fg"><label>Pré-visualização</label>
+      <div class="em-sub" id="em_subject"></div>
+      <pre class="em-prev" id="em_body"></pre>
+    </div>
+    <div class="ma">
+      <button class="mc" onclick="closeEmailModal()">Cancelar</button>
+      <button class="mf em-go" onclick="openGmailDraft()">Copiar nome do projeto e abrir o Gmail</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="draftFile" accept=".json,.pdf,application/json,application/pdf" hidden onchange="onDraftFile(this)">
 <!-- MODAL DE IMPORTAÇÃO POR IMAGEM -->
 <div class="mbg" id="mImageImport">
   <div class="mbox ocr-box" role="dialog" aria-modal="true" aria-labelledby="ocrTitle">

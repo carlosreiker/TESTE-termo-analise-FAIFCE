@@ -8,6 +8,19 @@ const currencyFields = [
   ['f_vdc','d_vdc'],['f_vaf','d_vaf'],
 ];
 
+/* ── DATAS: os campos usam o calendário nativo (valor ISO aaaa-mm-dd); o documento e os rascunhos usam dd/mm/aaaa ── */
+const DATE_IDS = ['f_dtp', 'f_iv', 'f_tv', 'f_data'];
+const pad2 = n => String(n).padStart(2, '0');
+function todayISO() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function isoToBr(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
+function brToIso(br) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br || '');
+  if (!m) return '';
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return (d.getFullYear() === +m[3] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[1]) ? `${m[3]}-${m[2]}-${m[1]}` : '';
+}
+function openPicker(input) { try { if (input.showPicker && !input.disabled) input.showPicker(); } catch (e) { /* o navegador pode recusar; o campo continua editável */ } }
+
 const items = [];
 const rubrics = [];
 const subs = [];
@@ -23,10 +36,15 @@ function init() {
     if (event.target === this) closeModal();
   });
 
+  document.getElementById('mEmail').addEventListener('click', function(event) {
+    if (event.target === this) closeEmailModal();
+  });
+
   window.addEventListener('beforeunload', handleBeforeUnload);
   addItem();
   addRubric();
   addSub();
+  document.getElementById('f_data').value = todayISO();
   syncEstimado();
   upd();
   initDrafts();
@@ -43,11 +61,12 @@ function handleBeforeUnload(event) {
 }
 
 function upd() {
+  if (typeof scheduleDraftData === 'function') scheduleDraftData();
   syncFields.forEach(([sourceId, targetId]) => {
     const source = document.getElementById(sourceId);
     const target = document.getElementById(targetId);
     if (source && target) {
-      target.textContent = source.value.trim() || '';
+      target.textContent = DATE_IDS.includes(sourceId) ? isoToBr(source.value) : (source.value.trim() || '');
     }
   });
 
@@ -57,7 +76,7 @@ function upd() {
   });
 
   const dtpNI = document.getElementById('ni_dtp').checked;
-  document.getElementById('d_dtp').textContent = dtpNI ? 'Não informado' : (document.getElementById('f_dtp').value.trim() || '');
+  document.getElementById('d_dtp').textContent = dtpNI ? 'Não informado' : isoToBr(document.getElementById('f_dtp').value);
 
   const vestNI = document.getElementById('ni_vest').checked;
   const dVestWrap = document.getElementById('d_vest_wrap');
@@ -124,6 +143,7 @@ function renderRubricsPreview() {
       : '';
     return `
     <tr><td colspan="2"><b>Rubrica ${index + 1}:</b> ${h(rubric.n)}</td></tr>
+    ${rubric.m && rubric.m.trim() ? `<tr><td colspan="2"><b>Meta/Etapa:</b> ${h(rubric.m)}</td></tr>` : ''}
     <tr>
       <td><b>Valor total atribuído à Rubrica:</b><br>${h(total)}</td>
       <td><b>Saldo existente na Rubrica:</b><br>${h(saldo)}</td>
@@ -140,6 +160,7 @@ function renderSubsPreview() {
     const vs = sub.vs && String(sub.vs).trim() ? (String(sub.vs).trim().startsWith('R$') ? String(sub.vs).trim() : ('R$ ' + String(sub.vs).trim())) : '';
     return `
     <tr><td colspan="2"><b>Subitem:</b> ${h(sub.n)}</td></tr>
+    ${sub.m && sub.m.trim() ? `<tr><td colspan="2"><b>Meta/Etapa:</b> ${h(sub.m)}</td></tr>` : ''}
     <tr>
       <td><b>Valor total do Subitem:</b><br>${h(vt)}</td>
       <td><b>Saldo existente no Subitem:</b><br>${h(vs)}</td>
@@ -154,13 +175,13 @@ function addItem() {
 }
 
 function addRubric() {
-  rubrics.push({ id: nextRubricId++, n: '', vt: '', vs: '' });
+  rubrics.push({ id: nextRubricId++, n: '', m: '', vt: '', vs: '' });
   renderRubrics();
   upd();
 }
 
 function addSub() {
-  subs.push({ id: nextSubId++, n: '', vt: '', vs: '' });
+  subs.push({ id: nextSubId++, n: '', m: '', vt: '', vs: '' });
   renderSubs();
   upd();
 }
@@ -288,6 +309,7 @@ function renderRubrics() {
       <button type="button" class="rdel" onclick="removeRubric(${rubric.id})" title="Remover rubrica">×</button>
       <div class="rbn">Rubrica ${index + 1}</div>
       <div class="fg"><label>Rubrica que atende ao pedido</label><input type="text" value="${esc(rubric.n)}" data-field="n" oninput="updateRubric(event)" required></div>
+      <div class="fg"><label>Meta/Etapa <span class="opt">(opcional)</span></label><input type="text" value="${esc(rubric.m)}" data-field="m" oninput="updateRubric(event)"></div>
       <div class="fr2">
         <div class="fg"><label>Valor total atribuído à Rubrica</label><input type="text" value="${esc(rubric.vt)}" data-field="vt" oninput="mCurr(this); updateRubric(event)" required></div>
         <div class="fg"><label>Saldo existente na Rubrica</label><input type="text" value="${esc(rubric.vs)}" data-field="vs" oninput="mCurr(this); updateRubric(event)" required></div>
@@ -305,6 +327,7 @@ function renderSubs() {
       <button type="button" class="sdel" onclick="removeSub(${sub.id})" title="Remover subitem">×</button>
       <div class="sbn">Subitem</div>
       <div class="fg"><label>Descrição do subitem</label><input type="text" value="${esc(sub.n)}" data-field="n" oninput="updateSub(event)" required></div>
+      <div class="fg"><label>Meta/Etapa <span class="opt">(opcional)</span></label><input type="text" value="${esc(sub.m)}" data-field="m" oninput="updateSub(event)"></div>
       <div class="fr2">
         <div class="fg"><label>Valor total do Subitem</label><input type="text" value="${esc(sub.vt)}" data-field="vt" oninput="mCurr(this); updateSub(event)" required></div>
         <div class="fg"><label>Saldo existente no Subitem</label><input type="text" value="${esc(sub.vs)}" data-field="vs" oninput="mCurr(this); updateSub(event)" required></div>
@@ -573,8 +596,81 @@ function validateAll() {
   return true;
 }
 
-function gerarPDF() {
+/* ══════════════════════════════════════════════════════════════
+   PDF COM DADOS EMBUTIDOS — o PDF gerado carrega, em texto invisível (branco, 2 px) no fim da última página,
+   o mesmo conteúdo do rascunho (compactado). "Abrir rascunho" lê esse texto com o pdf.js e recupera o preenchimento.
+   ══════════════════════════════════════════════════════════════ */
+const PDF_TAG_START = 'FAIFCEDRAFT:';
+const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function bytesToBase64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function base64ToBytes(b64) {
+  const bin = atob(b64), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+async function streamBytes(bytes, transform) {
+  const stream = new Blob([bytes]).stream().pipeThrough(transform);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function encodeDraftForPdf() {
+  const bytes = new TextEncoder().encode(JSON.stringify(buildDraft()));
+  let tag = 'R', out = bytes;
+  if (typeof CompressionStream === 'function') {
+    try { out = await streamBytes(bytes, new CompressionStream('gzip')); tag = 'G'; } catch (e) { out = bytes; tag = 'R'; }
+  }
+  return `${PDF_TAG_START}${tag}:${bytesToBase64(out)}:END`;
+}
+async function decodeDraftFromText(text) {
+  const clean = String(text || '').replace(/\s+/g, '');
+  const m = /FAIFCEDRAFT:([GR]):([A-Za-z0-9+\/=]+):END/.exec(clean);
+  if (!m) return null;
+  let bytes = base64ToBytes(m[2]);
+  if (m[1] === 'G') {
+    if (typeof DecompressionStream !== 'function') throw new Error('Este navegador não consegue descompactar o PDF. Use um navegador atualizado (Chrome, Edge, Firefox ou Safari recente).');
+    bytes = await streamBytes(bytes, new DecompressionStream('gzip'));
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+let draftDataTimer = null;
+async function refreshDraftData() {
+  try { document.getElementById('draftData').textContent = await encodeDraftForPdf(); } catch (e) { /* o PDF sai normalmente, apenas sem os dados */ }
+}
+function scheduleDraftData() { clearTimeout(draftDataTimer); draftDataTimer = setTimeout(refreshDraftData, 500); }
+
+function loadPdfJs() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = PDFJS_URL;
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL; resolve(window.pdfjsLib); };
+    s.onerror = () => reject(new Error('Não foi possível carregar o leitor de PDF. Verifique a conexão com a internet e tente de novo.'));
+    document.head.appendChild(s);
+  });
+}
+async function readDraftFromPdf(file) {
+  const pdfjs = await loadPdfJs();
+  const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  let text = '';
+  for (let n = pdf.numPages; n >= 1; n--) {      // os dados ficam no fim: começa pela última página
+    const page = await pdf.getPage(n);
+    const content = await page.getTextContent();
+    text = content.items.map(i => i.str).join('') + text;
+    if (text.includes(':END')) break;
+  }
+  const data = await decodeDraftFromText(text);
+  if (!data) throw new Error('Este PDF não contém os dados do preenchimento. Só é possível abrir PDFs gerados por esta versão do site; para os demais, use o arquivo de rascunho (.faifce.json).');
+  return data;
+}
+
+async function gerarPDF() {
   if (!validateAll()) return;
+  await refreshDraftData();
 
   const number = document.getElementById('f_num').value.trim();
   const oldTitle = document.title;
@@ -601,6 +697,7 @@ function doReset() {
     el.classList.remove('invalid');
     if (el.tagName === 'INPUT') el.disabled = false;
   });
+  document.getElementById('f_data').value = todayISO();
   document.getElementById('ni_dtp').checked = false;
   document.getElementById('ni_vest').checked = false;
   document.getElementById('d_vest_wrap').textContent = 'R$ ';
@@ -685,7 +782,7 @@ function initDrafts() {
 
 function buildDraft() {
   const campos = {};
-  Object.entries(DRAFT_TEXT).forEach(([key, id]) => { campos[key] = document.getElementById(id).value; });
+  Object.entries(DRAFT_TEXT).forEach(([key, id]) => { const v = document.getElementById(id).value; campos[key] = DATE_IDS.includes(id) ? isoToBr(v) : v; });
   return {
     formato: DRAFT_FORMAT,
     versao: DRAFT_VERSION,
@@ -696,9 +793,9 @@ function buildDraft() {
       valorEstimado: document.getElementById('ni_vest').checked,
     },
     valorEstimadoManual: vestManual,
-    rubricas: rubrics.map(r => ({ descricao: r.n, valorTotal: r.vt, saldo: r.vs })),
+    rubricas: rubrics.map(r => ({ descricao: r.n, metaEtapa: r.m || '', valorTotal: r.vt, saldo: r.vs })),
     itens: items.map(i => ({ descricao: i.d, quantidade: i.q, unidade: i.u, valorUnitario: i.v, naoInformado: i.ni })),
-    subitens: subs.map(s => ({ descricao: s.n, valorTotal: s.vt, saldo: s.vs })),
+    subitens: subs.map(s => ({ descricao: s.n, metaEtapa: s.m || '', valorTotal: s.vt, saldo: s.vs })),
     parecer: document.getElementById('parecerEd').innerHTML,
   };
 }
@@ -736,10 +833,17 @@ async function onDraftFile(input) {
   input.value = '';
   if (!file) return;
   try {
-    if (file.size > DRAFT_MAX_BYTES) throw new Error('O arquivo é grande demais para ser um rascunho.');
+    const isPdf = /\.pdf$/i.test(file.name) || file.type === 'application/pdf';
+    if (!isPdf && file.size > DRAFT_MAX_BYTES) throw new Error('O arquivo é grande demais para ser um rascunho.');
+    if (isPdf && file.size > 30000000) throw new Error('O PDF é grande demais.');
     let data;
-    try { data = JSON.parse(await file.text()); }
-    catch (e) { throw new Error('Não foi possível ler o arquivo: o conteúdo não é um JSON válido.'); }
+    if (isPdf) {
+      showToast('📄 Lendo o PDF…');
+      data = await readDraftFromPdf(file);
+    } else {
+      try { data = JSON.parse(await file.text()); }
+      catch (e) { throw new Error('Não foi possível ler o arquivo: o conteúdo não é um JSON válido.'); }
+    }
     const draft = normalizeDraft(data);
     if (isDirty()) {
       pendingDraft = draft;
@@ -783,7 +887,7 @@ function normalizeDraft(data) {
   Object.entries(DRAFT_TEXT).forEach(([key, id]) => {
     let value = txt(campos[key]);
     if (DRAFT_MONEY.includes(id)) value = fmtCurr(value);
-    if (DRAFT_DATES.includes(id)) value = fmtDate(value);
+    if (DRAFT_DATES.includes(id)) value = brToIso(fmtDate(value));
     fields[id] = value;
   });
 
@@ -791,6 +895,7 @@ function normalizeDraft(data) {
     const r = obj(raw);
     return {
       n: txt(r.descricao),
+      m: txt(r.metaEtapa),
       vt: fmtCurr(txt(r.valorTotal, 50)),
       vs: fmtCurr(txt(r.saldo, 50)),
     };
@@ -802,7 +907,7 @@ function normalizeDraft(data) {
     const legacyTotal = fmtCurr(txt(campos.valorTotalRubrica, 50));
     const legacySaldo = fmtCurr(txt(campos.saldoRubrica, 50));
     if (legacyName || legacyTotal || legacySaldo) {
-      normalizedRubrics = [{ n: legacyName, vt: legacyTotal, vs: legacySaldo }];
+      normalizedRubrics = [{ n: legacyName, m: '', vt: legacyTotal, vs: legacySaldo }];
     }
   }
 
@@ -819,7 +924,7 @@ function normalizeDraft(data) {
     }),
     subs: list(data.subitens, 100).map(raw => {
       const s = obj(raw);
-      return { n: txt(s.descricao), vt: fmtCurr(txt(s.valorTotal, 50)), vs: fmtCurr(txt(s.saldo, 50)) };
+      return { n: txt(s.descricao), m: txt(s.metaEtapa), vt: fmtCurr(txt(s.valorTotal, 50)), vs: fmtCurr(txt(s.saldo, 50)) };
     }),
     parecerHtml: cleanParecer(txt(data.parecer, 100000)),
   };
@@ -850,6 +955,7 @@ function cleanParecer(html) {
 function applyDraft(d, name) {
   document.querySelectorAll('.fp .invalid').forEach(el => el.classList.remove('invalid'));
   Object.entries(d.fields).forEach(([id, value]) => { document.getElementById(id).value = value; });
+  if (!document.getElementById('f_data').value) document.getElementById('f_data').value = todayISO();
   [['ni_dtp', 'f_dtp', d.niDtp], ['ni_vest', 'f_vest', d.niVest]].forEach(([checkId, fieldId, on]) => {
     const field = document.getElementById(fieldId);
     document.getElementById(checkId).checked = on;
@@ -874,6 +980,63 @@ function applyDraft(d, name) {
   upd();
   markSaved();
   showToast('📂 Rascunho aberto: ' + name, 'ok');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   E-MAIL — abre um rascunho no Gmail com o modelo preenchido
+   ══════════════════════════════════════════════════════════════ */
+const LINK_PLACEHOLDER = '[ANEXAR A PASTA "01 | INSTRUMENTOS JURÍDICOS" COMO LINK: ícone do Google Drive > pesquisar "1. ATIVOS" > abrir a pasta do projeto > selecionar "01 | Instrumentos Jurídicos" > Adicionar como link. Depois apague esta linha]';
+
+function emailParts() {
+  const num = document.getElementById('f_num').value.trim();
+  const proj = document.getElementById('f_proj').value.trim();
+  const link = (document.getElementById('em_link').value || '').trim();
+  const numTxt = num ? `${num}/2026` : '[N° DO PEDIDO]';
+  const subject = `Termo de Análise - Pedido de Compra n° ${numTxt}`;
+  const body = [
+    'Prezados mentores!',
+    '',
+    `Encaminho, para sua análise e conhecimento, em anexo, o Termo de Análise n.º ${numTxt}, referente ao projeto ${proj || '[NOME DO PROJETO]'} e o termo de referência também o qual foi anexado a este pedido no sistema Conveniar.`,
+    'Segue link da pasta contendo a documentação do projeto:',
+    link || LINK_PLACEHOLDER,
+    '',
+    'Aguardo sua devolutiva para podermos dar continuidade aos próximos passos relacionados ao pedido de compras.',
+  ].join('\n');
+  return { subject, body, num, proj, link };
+}
+
+function renderEmailPreview() {
+  const e = emailParts();
+  document.getElementById('em_subject').textContent = e.subject;
+  document.getElementById('em_body').textContent = e.body;
+}
+
+function openEmailModal() {
+  const num = document.getElementById('f_num'), proj = document.getElementById('f_proj');
+  const missing = [num, proj].find(el => !el.value.trim());
+  if (missing) {
+    missing.classList.add('invalid'); missing.focus();
+    showToast('Preencha o número do pedido e o projeto para montar o e-mail.', 'error');
+    return;
+  }
+  renderEmailPreview();
+  document.getElementById('em_projname').textContent = proj.value.trim();
+  document.getElementById('mEmail').classList.add('show');
+}
+function closeEmailModal() { document.getElementById('mEmail').classList.remove('show'); }
+
+function openGmailDraft() {
+  const e = emailParts();
+  if (e.link && !/^https:\/\/(drive|docs)\.google\.com\//i.test(e.link)) {
+    showToast('O link deve ser do Google Drive (https://drive.google.com/…).', 'error');
+    document.getElementById('em_link').focus();
+    return;
+  }
+  try { navigator.clipboard.writeText(e.proj).catch(() => {}); } catch (err) { /* sem permissão: o nome continua visível no passo a passo */ }
+  const url = 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=' + encodeURIComponent(e.subject) + '&body=' + encodeURIComponent(e.body);
+  window.open(url, '_blank', 'noopener');
+  closeEmailModal();
+  showToast(e.link ? '✉️ Rascunho aberto no Gmail. Anexe o PDF e informe os destinatários.' : '✉️ Rascunho aberto. Nome do projeto copiado: use-o ao inserir a pasta pelo Google Drive.', 'ok');
 }
 
 window.addEventListener('DOMContentLoaded', init);

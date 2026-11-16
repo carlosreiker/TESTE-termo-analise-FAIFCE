@@ -473,6 +473,98 @@
     return lines;
   }
 
+  /**
+   * Vincula as linhas de texto da coluna Produto às linhas da tabela (âncoras = linhas lidas nas colunas numéricas).
+   *
+   * Um mesmo produto pode ocupar várias linhas visuais dentro da célula (texto que quebra). Todas elas
+   * pertencem ao MESMO item; só começa um item novo onde começa uma nova linha da tabela. Por isso as linhas
+   * de texto são tratadas como uma sequência contínua, cortada em exatamente (nº de itens − 1) pontos:
+   *   • "topo": os números ficam alinhados à 1ª linha do texto → o corte vem logo antes da 1ª linha do item seguinte;
+   *   • "meio/base": os números ficam no meio/fim da célula → o corte vai na maior folga entre as duas âncoras.
+   * O modo é decidido pela tabela inteira (um único corte "fora do lugar" não basta), para que um ruído de leitura numa linha não parta um item.
+   * Devolve { rows: Map(índice da âncora → linhas de texto), extra: linhas de texto sem âncora }.
+   */
+  function assignTextLines(lines, anchors, Hl) {
+    const rows = new Map(), extra = [];
+    if (!lines.length || !anchors.length) return { rows, extra };
+    const tolA = 0.8 * Hl;
+
+    // 1) linha "primária" de cada âncora: a linha de texto mais próxima na vertical (pareamento 1 a 1, em ordem)
+    const pairs = [];
+    anchors.forEach((a, ai) => lines.forEach((ln, li) => { const d = Math.abs(ln.yc - a.yc); if (d <= tolA) pairs.push({ ai, li, d }); }));
+    pairs.sort((x, y) => x.d - y.d);
+    const prim = anchors.map(() => -1), usedA = new Set(), usedL = new Set();
+    pairs.forEach(p => { if (!usedA.has(p.ai) && !usedL.has(p.li)) { usedA.add(p.ai); usedL.add(p.li); prim[p.ai] = p.li; } });
+    let last = -1;   // mantém a ordem: âncora de baixo não pode ter linha primária acima da anterior
+    anchors.forEach((a, ai) => { if (prim[ai] >= 0) { if (prim[ai] > last) last = prim[ai]; else prim[ai] = -1; } });
+    const M = anchors.map((a, ai) => ai).filter(ai => prim[ai] >= 0);
+
+    if (!M.length) {   // nenhuma correspondência direta: vincula cada linha à âncora mais próxima
+      lines.forEach(ln => {
+        let best = -1, bd = Infinity;
+        anchors.forEach((a, ai) => { const d = Math.abs(a.yc - ln.yc); if (d < bd) { bd = d; best = ai; } });
+        if (best >= 0 && bd <= 2.2 * Hl) { if (!rows.has(best)) rows.set(best, []); rows.get(best).push(ln); }
+      });
+      return { rows, extra };
+    }
+
+    const pitch = k => lines[k + 1].yc - lines[k].yc;
+
+    // 2) modo da tabela: o maior espaçamento entre duas âncoras cai logo antes da linha primária seguinte?
+    let top = 0, other = 0;
+    for (let m = 0; m < M.length - 1; m++) {
+      const pa = prim[M[m]], pb = prim[M[m + 1]];
+      if (pb - pa < 2) continue;
+      const ps = []; for (let k = pa; k < pb; k++) ps.push({ k, p: pitch(k) });
+      ps.sort((x, y) => y.p - x.p);
+      if (ps[0].p >= 1.15 * ps[1].p) { if (ps[0].k === pb - 1) top++; else other++; }
+    }
+    // Em tabelas alinhadas ao topo um corte "fora do lugar" nunca ocorre; em tabelas centralizadas ocorre sempre que o item tem 2+ linhas acima do número.
+    const modeGap = other >= 2 || (other >= 1 && top === 0);
+
+    // 3) um corte entre cada par de âncoras consecutivas
+    const cuts = new Set(), cutPitches = [];
+    for (let m = 0; m < M.length - 1; m++) {
+      const pa = prim[M[m]], pb = prim[M[m + 1]];
+      let k = pb - 1;
+      if (modeGap && pb - pa >= 2) {
+        const ps = []; for (let j = pa; j < pb; j++) ps.push({ k: j, p: pitch(j) });
+        ps.sort((x, y) => y.p - x.p);
+        if (ps[0].p >= 1.15 * ps[1].p) k = ps[0].k;
+      }
+      cuts.add(k); cutPitches.push(pitch(k));
+    }
+
+    // 4) distribui as linhas pelos itens
+    const first = prim[M[0]], lastP = prim[M[M.length - 1]];
+    const push = (ai, ln) => { if (!rows.has(ai)) rows.set(ai, []); rows.get(ai).push(ln); };
+    let mi = 0;
+    for (let li = first; li <= lastP; li++) {
+      push(M[mi], lines[li]);
+      if (cuts.has(li) && mi < M.length - 1) mi++;
+    }
+
+    // 5) linhas fora do intervalo das âncoras
+    const inner = []; for (let k = first; k < lastP; k++) if (!cuts.has(k)) inner.push(pitch(k));
+    const lim = inner.length >= 3 ? 1.3 * median(inner) : 1.8 * Hl;   // distância máxima entre linhas da MESMA célula
+    // abaixo da última âncora: o final do texto do último item (que quebrou em várias linhas)
+    for (let li = lastP + 1; li < lines.length; li++) {
+      if (pitch(li - 1) <= lim) push(M[M.length - 1], lines[li]); else break;
+    }
+    // acima da primeira âncora: só entram na 1ª linha quando os números ficam no meio/fim da célula
+    if (modeGap) {
+      const above = [];
+      for (let li = first - 1; li >= 0; li--) { if (pitch(li) <= lim) above.unshift(lines[li]); else break; }
+      if (above.length) rows.set(M[0], above.concat(rows.get(M[0]) || []));
+    }
+    // linhas soltas dentro da faixa da tabela (ex.: linha cuja leitura numérica falhou por completo) viram item à parte
+    const taken = new Set(); rows.forEach(list => list.forEach(l => taken.add(l)));
+    const y0 = anchors[0].y0, y1 = anchors[anchors.length - 1].y1;
+    const loose = lines.filter(l => !taken.has(l) && l.yc > y0 - Hl && l.yc < y1 + Hl && norm(l.text).length >= 3);
+    loose.forEach(l => extra.push({ yc: l.yc, text: l.text, conf: l.conf }));
+    return { rows, extra };
+  }
+
   /** Se a coluna usa N casas decimais e uma leitura perdeu a vírgula, recoloca-a. */
   function fixDecimals(lines) {
     const counts = {};
@@ -588,6 +680,26 @@
       .filter(l => /\d/.test(l.text));
   }
 
+  /** Binariza (Otsu) e acrescenta margem branca: ajuda o OCR em células com um único dígito sobre fundo sombreado. */
+  function binarizeWithMargin(crop, margin) {
+    const { data, w, h } = crop;
+    const hist = new Array(256).fill(0);
+    for (let i = 0; i < data.length; i++) hist[data[i] | 0]++;
+    let sum = 0; for (let t = 0; t < 256; t++) sum += t * hist[t];
+    let wB = 0, sumB = 0, best = 0, thr = 128;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t]; if (!wB) continue;
+      const wF = data.length - wB; if (!wF) break;
+      sumB += t * hist[t];
+      const mB = sumB / wB, mF = (sum - sumB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; thr = t; }
+    }
+    const W = w + 2 * margin, Hh = h + 2 * margin;
+    const out = new Uint8ClampedArray(W * Hh).fill(255);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[(y + margin) * W + x + margin] = data[y * w + x] <= thr ? 0 : 255;
+    return { data: out, w: W, h: Hh, ox: (crop.ox || 0) - margin, oy: (crop.oy || 0) - margin };
+  }
+
   async function readCell(G, env, col, a, H, opts) {
     const crop = stretchContrast(keepMainInk(stripResidualVLines(cropGray(G, col.sx0, a.y0 - 0.3 * H, col.sx1, a.y1 + 0.3 * H, 18), 18), 18, col, H), 18);
     let r = await env.recognize(crop, { psm: '7', whitelist: opts.whitelist });
@@ -596,6 +708,14 @@
       for (const psm of ['8', '10']) {
         const r2 = await env.recognize(crop, { psm, whitelist: opts.whitelist });
         if (/\d/.test(String(r2.text || ''))) { r = r2; break; }
+      }
+      if (!/\d/.test(String(r.text || ''))) {
+        // ainda sem dígito: binariza o recorte, acrescenta margem branca e tenta de novo
+        const bin = binarizeWithMargin(crop, 30);
+        for (const psm of ['7', '8', '10']) {
+          const r3 = await env.recognize(bin, { psm, whitelist: opts.whitelist });
+          if (/\d/.test(String(r3.text || ''))) { r = r3; break; }
+        }
       }
     }
     const text = String(r.text || '').replace(/\s+/g, ' ').trim();
@@ -685,51 +805,34 @@
       }
     }
 
-    // Produtos: agrupa pelo intervalo vertical de cada registro, delimitado
-    // pelas âncoras da coluna de valor. Quebras de linha do OCR são apenas
-    // linhas de texto da mesma célula, não novos produtos.
+    // Produtos: palavras da coluna → linhas de texto → vinculadas às âncoras
+    prog(0.93, 'Montando as linhas');
     const prodWords = body.filter(w => assignRole(layout, w) === 'prod' && !/^[^A-Za-z0-9À-ÿ]+$/.test(w.text));
-    const sortedAnchors = anchors.slice().sort((a, b) => a.y0 - b.y0);
-    const rowWords = sortedAnchors.map(() => []);
-    const firstTop = sortedAnchors.length ? sortedAnchors[0].y0 - 0.9 * Hl : 0;
+    const Hw = median(prodWords.map(w => w.h)) || Hl;
+    const lines = groupLines(prodWords, 0.55 * Hw).map(l => {
+      // sem cabeçalho não há como saber qual é a coluna "Código": descarta número isolado colado à esquerda do nome
+      if (layout.mode === 'sem-cabecalho' && l.items.length > 1 && /^\d{2,}$/.test(l.items[0].text) && l.items[1].x0 - l.items[0].x1 > 0.6 * Hw) l.items = l.items.slice(1);
+      return l;
+    }).map(l => ({
+      yc: l.yc, y0: l.y0, y1: l.y1, items: l.items,
+      text: l.items.map(i => i.text).join(' '), conf: Math.min(...l.items.map(i => i.conf)),
+    }));
+    // Vincula cada linha de texto do produto à linha da tabela a que pertence (ver assignTextLines)
+    const { rows: rowsByAnchor, extra: extraRows } = assignTextLines(lines, anchors, Hl);
 
-    for (const w of prodWords) {
-      // A linha do produto é a última âncora iniciada antes do centro do texto.
-      // A tolerância superior contempla pequenas diferenças de alinhamento entre colunas.
-      let idx = -1;
-      for (let i = 0; i < sortedAnchors.length; i++) {
-        const top = sortedAnchors[i].y0 - 0.9 * Hl;
-        if (w.yc >= top) idx = i;
-        else break;
-      }
-      if (idx < 0 && sortedAnchors.length && w.yc >= firstTop - Hl) idx = 0;
-      if (idx >= 0) rowWords[idx].push(w);
-    }
-
-    const raw = sortedAnchors.map((a, i) => {
-      const wordsInRow = rowWords[i].sort((x, y) => x.yc - y.yc || x.x0 - y.x0);
-      // Agrupa palavras da mesma célula por linha visual e depois concatena
-      // as linhas, preservando a descrição completa do produto.
-      const textLines = groupLines(wordsInRow, 0.65 * (median(wordsInRow.map(w => w.h)) || Hl));
-      const description = textLines
-        .map(line => line.items.sort((x, y) => x.x0 - y.x0).map(item => item.text).join(' '))
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
+    // Linhas finais
+    const raw = anchors.map((a, ai) => {
+      const list = rowsByAnchor.get(ai) || [];
       return {
         yc: a.yc,
-        d: description,
-        dConf: wordsInRow.length ? Math.min(...wordsInRow.map(w => w.conf)) : 0,
-        q: a.qty ? a.qty.text : '',
-        qConf: a.qty ? a.qty.conf : 0,
-        u: a.unit ? a.unit.text : '',
-        uConf: a.unit ? a.unit.conf : 0,
-        v: a.value ? a.value.text : '',
-        vConf: a.value ? a.value.conf : 0,
+        d: list.map(l => l.text).join(' '), dConf: list.length ? Math.min(...list.map(l => l.conf)) : 0,
+        q: a.qty ? a.qty.text : '', qConf: a.qty ? a.qty.conf : 0,
+        u: a.unit ? a.unit.text : '', uConf: a.unit ? a.unit.conf : 0,
+        v: a.value ? a.value.text : '', vConf: a.value ? a.value.conf : 0,
         t: a.total ? a.total.text : '',
       };
     });
+    extraRows.forEach(e => raw.push({ yc: e.yc, d: e.text, dConf: e.conf, q: '', qConf: 0, u: '', uConf: 0, v: '', vConf: 0, t: '' }));
     raw.sort((a, b) => a.yc - b.yc);
 
     const freq = {};
@@ -872,7 +975,7 @@
   const api = {
     UNITS, norm, lev, matchUnit, parseMoney, formatBRL, parseQty, cleanProduct,
     classifyHeader, findHeader, buildLayoutFromHeader, inferLayout, assignRole, cleanWords,
-    cropGray, invertLevels, normalizePolarity, removeGridLines, prepareGray, readTable, finalizeRow,
+    cropGray, invertLevels, normalizePolarity, removeGridLines, prepareGray, readTable, assignTextLines, finalizeRow,
     validateFields, duplicateIssues, collectIssues, worstLevel, FIELD_LABEL,
   };
   root.LeitorItens = api;
