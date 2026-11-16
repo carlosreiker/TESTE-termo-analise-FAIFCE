@@ -1076,7 +1076,7 @@ function openGmailDraft() {
   if (!checkEmailLink(e)) return;
   try { navigator.clipboard.writeText(e.proj).catch(() => {}); } catch (err) { /* sem permissão: o nome continua visível no passo a passo */ }
   window.open(gmailUrl(e.subject, e.body), '_blank', 'noopener');
-  showToast('✉️ Rascunho aberto no Gmail. Nome do projeto copiado; falta a assinatura, a pasta e o PDF.', 'ok');
+  showToast('✉️ Rascunho aberto no Gmail. Faltam a assinatura, a pasta do Drive, o PDF e os destinatários.', 'ok');
 }
 
 // Opção 2 (negrito real): copia o corpo formatado (HTML) e abre o Gmail só com o assunto; o usuário cola no corpo (Ctrl+V).

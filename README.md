@@ -60,11 +60,14 @@ JSON legível, com `formato: "faifce-termo-analise"` e `versao: 2`. Ao abrir, o 
 O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela mostra o passo a passo e fica aberta enquanto você usa o Gmail:
 
 1. **Gerar PDF** e salvar o arquivo.
-2. **Abrir Gmail com assinatura**: copia o texto do e-mail (com negrito real no nº do pedido e no projeto) e abre o Gmail só com o assunto, para ele inserir a sua assinatura padrão. Clique no corpo (acima da assinatura) e cole com Ctrl+V.
-3. Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
-4. Anexe o PDF e informe os destinatários.
+2. **Abrir rascunho no Gmail**: abre o Gmail com assunto e mensagem preenchidos (nº do pedido e projeto em negrito visual). O nome do projeto fica copiado.
+3. **Assinatura**: clique no final do texto e use o ícone da caneta (Inserir assinatura) do Gmail.
+4. Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
+5. Anexe o PDF e informe os destinatários.
 
-Limites: o Gmail não deixa um site anexar arquivos nem inserir a pasta do Drive (só por API com login Google, não adotada). Existe também a alternativa de um clique (rascunho já preenchido por link), mas nela o Gmail não insere a assinatura e o negrito é apenas visual. O "Atenciosamente," vem da própria assinatura do Gmail.
+Alternativa (link no rodapé da janela): copia o texto com negrito real e abre o Gmail só com o assunto, que então insere a assinatura sozinho; basta clicar no corpo e colar com Ctrl+V.
+
+Limites: o Gmail não coloca a assinatura quando o rascunho abre com texto pronto, não aceita negrito real em rascunhos abertos por link, e não deixa um site anexar arquivos nem inserir a pasta do Drive (só por API com login Google, não adotada). O "Atenciosamente," vem da assinatura do Gmail.
 
 ## Publicação
 

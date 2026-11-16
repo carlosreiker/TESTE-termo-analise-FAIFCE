@@ -268,11 +268,11 @@
     <div class="fg"><label>Passo a passo</label>
       <ol class="em-steps">
         <li>Gere o PDF do termo (botão <b>Gerar PDF</b> › salvar) para ter o arquivo pronto.</li>
-        <li>Clique em <b>Abrir Gmail com assinatura</b> (abaixo): o texto do e-mail, já com negrito, é copiado e o Gmail abre com o assunto e a sua assinatura.</li>
-        <li>No Gmail, clique no corpo do e-mail (acima da assinatura) e cole com <b>Ctrl+V</b>.</li>
+        <li>Clique em <b>Abrir rascunho no Gmail</b> (abaixo): o assunto e a mensagem já vêm preenchidos, com o nº do pedido e o projeto em negrito. O nome do projeto fica copiado.</li>
+        <li><b>Assinatura:</b> clique no final do texto, depois no ícone da caneta (<b>Inserir assinatura</b>) na barra inferior do Gmail e escolha a sua.</li>
         <li>Ícone do <b>Google Drive</b> › Inserir arquivos com o Google Drive › pesquise <b>1. ATIVOS</b> › abra a pasta do projeto: <b id="em_projname"></b></li>
         <li>Selecione <b>01 | Instrumentos Jurídicos</b> › <b>Adicionar como link</b> e apague a linha entre colchetes.</li>
-        <li>Anexe o PDF (clique no clipe 📎 ou arraste o arquivo para o e-mail) e informe os destinatários.</li>
+        <li>Anexe o PDF (clipe 📎 ou arrastando o arquivo) e informe os destinatários.</li>
       </ol>
     </div>
     <div class="fg">
@@ -280,17 +280,17 @@
       <input type="text" id="em_link" placeholder="https://drive.google.com/drive/folders/…" oninput="renderEmailPreview()">
       <div class="em-help">Se colar o link, ele entra no corpo do e-mail no lugar da linha de instrução.</div>
     </div>
-    <div class="fg"><label>Pré-visualização (o negrito aparece no Gmail)</label>
+    <div class="fg"><label>Pré-visualização</label>
       <div class="em-sub" id="em_subject"></div>
       <pre class="em-prev" id="em_body"></pre>
     </div>
     <div class="ma">
       <button class="mc" onclick="closeEmailModal()">Fechar</button>
-      <button class="mf em-go" onclick="openGmailRichDraft()">Abrir Gmail com assinatura</button>
+      <button class="mf em-go" onclick="openGmailDraft()">Abrir rascunho no Gmail</button>
     </div>
     <div class="em-help" style="margin-top:8px">
-      Alternativa de um clique: <button type="button" class="linkbtn" onclick="openGmailDraft()">abrir o rascunho já preenchido por link</button>.
-      Nesse modo o Gmail não insere a assinatura (use “Inserir assinatura” do próprio Gmail) e o negrito é apenas visual.
+      O Gmail não coloca a assinatura sozinho quando o rascunho já vem com texto, e o negrito desse modo é apenas visual (𝗮𝘀𝘀𝗶𝗺).
+      Prefere <b>negrito real e assinatura automática</b>? <button type="button" class="linkbtn" onclick="openGmailRichDraft()">Copiar o texto e abrir o Gmail só com o assunto</button>: depois clique no corpo e cole com Ctrl+V.
     </div>
   </div>
 </div>
