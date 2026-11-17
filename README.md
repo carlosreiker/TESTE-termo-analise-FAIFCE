@@ -57,15 +57,19 @@ JSON legível, com `formato: "faifce-termo-analise"` e `versao: 2`. Ao abrir, o 
 
 ## Enviar e-mail (Gmail)
 
-O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela traz o campo **Pedido Prioritário?**: se marcado, o assunto começa com "PRIORITÁRIO - " e a primeira linha do e-mail é "PEDIDO PRIORITÁRIO" (texto preto, negrito, fundo vermelho vivo). Passo a passo (a janela fica aberta durante o uso do Gmail):
+O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela traz o campo **Pedido Prioritário?**: se marcado, o assunto começa com "PRIORITÁRIO - " e a primeira linha do e-mail é "PEDIDO PRIORITÁRIO" (texto preto, negrito, fundo vermelho vivo).
 
-1. **Gerar PDF** e salvar o arquivo.
-2. **Abrir Gmail**: o assunto vai escrito, o Gmail insere a assinatura padrão de quem está logado, e a mensagem (com negrito real no nº do pedido e no projeto) fica copiada.
-3. No Gmail, clique no corpo (acima da assinatura) e cole com **Ctrl+V**.
-4. Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
-5. Anexe o PDF e informe os destinatários.
+### Modo automático (recomendado): mensagem + assinatura juntas
 
-Por que colar? O Gmail só aceita texto simples em rascunhos abertos por link, e nesse modo não insere a assinatura. Existe uma alternativa sem colar (link no rodapé da janela): o rascunho abre já preenchido, mas sem assinatura e sem o destaque vermelho (o título prioritário vai só em negrito visual). Deixar tudo 100% automático (texto formatado + assinatura + anexo) só é possível com a API do Gmail e login Google, não adotada.
+Exige a configuração única da pasta `apps-script/` (veja `apps-script/LEIAME-CONFIGURACAO.md`; cerca de 10 minutos, feita por uma pessoa da FAIFCE). Depois, o botão **Criar rascunho no Gmail** abre uma aba que cria, no Gmail de quem clicou, um rascunho com assunto, mensagem formatada (negrito real e destaque) e a **assinatura padrão dessa pessoa**. Falta só inserir a pasta do Drive, anexar o PDF e informar os destinatários.
+
+### Modo sem configuração (copiar e colar)
+
+Enquanto `GMAIL_DRAFT_ENDPOINT` (em `assets/js/termo-analise-faifce.js`) estiver vazio, o botão **Abrir Gmail** abre o Gmail só com o assunto (o Gmail insere a assinatura) e deixa a mensagem copiada: clique no corpo e cole com **Ctrl+V**. A alternativa por link abre o rascunho preenchido, mas sem assinatura e sem o destaque vermelho (limites do Gmail em rascunhos abertos por link).
+
+### Pasta do Drive e PDF (manuais)
+
+Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes. O PDF (gerado antes com **Gerar PDF**) é anexado pelo clipe ou arrastando o arquivo.
 
 ## Publicação
 

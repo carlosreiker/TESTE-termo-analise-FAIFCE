@@ -271,8 +271,8 @@
     <div class="fg"><label>Passo a passo</label>
       <ol class="em-steps">
         <li>Gere o PDF do termo (botão <b>Gerar PDF</b> › salvar) para ter o arquivo pronto.</li>
-        <li>Clique em <b>Abrir Gmail</b> (abaixo): o assunto já vai escrito e a sua assinatura padrão é inserida pelo próprio Gmail. A mensagem (com negrito e destaque) fica copiada.</li>
-        <li><b>No Gmail, clique no corpo do e-mail (acima da assinatura) e cole com Ctrl+V.</b></li>
+        <li id="em_step_open">Clique em <b>Abrir Gmail</b> (abaixo): o assunto já vai escrito e a sua assinatura padrão é inserida pelo próprio Gmail. A mensagem (com negrito e destaque) fica copiada.</li>
+        <li id="em_step_paste"><b>No Gmail, clique no corpo do e-mail (acima da assinatura) e cole com Ctrl+V.</b></li>
         <li>Ícone do <b>Google Drive</b> › Inserir arquivos com o Google Drive › pesquise <b>1. ATIVOS</b> › abra a pasta do projeto: <b id="em_projname"></b></li>
         <li>Selecione <b>01 | Instrumentos Jurídicos</b> › <b>Adicionar como link</b> e apague a linha entre colchetes.</li>
         <li>Anexe o PDF (clipe 📎 ou arrastando o arquivo) e informe os destinatários.</li>
@@ -289,9 +289,9 @@
     </div>
     <div class="ma">
       <button class="mc" onclick="closeEmailModal()">Fechar</button>
-      <button class="mf em-go" onclick="openGmailRichDraft()">Abrir Gmail</button>
+      <button class="mf em-go" id="em_btn_main" onclick="openGmailRichDraft()">Abrir Gmail</button>
     </div>
-    <div class="em-help" style="margin-top:8px">
+    <div class="em-help" id="em_alt_help" style="margin-top:8px">
       Por que é preciso colar? O Gmail só aceita texto simples em rascunhos abertos por link, e nesse modo ele não insere a assinatura. Texto formatado + assinatura só juntos com a colagem.
       Alternativa sem colar (sem assinatura e sem o destaque vermelho): <button type="button" class="linkbtn" onclick="openGmailDraft()">abrir o rascunho já preenchido por link</button>.
     </div>

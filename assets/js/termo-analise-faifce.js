@@ -1028,6 +1028,9 @@ function applyDraft(d, name) {
 /* ══════════════════════════════════════════════════════════════
    E-MAIL — abre um rascunho no Gmail com o modelo preenchido
    ══════════════════════════════════════════════════════════════ */
+// URL do "App da Web" (Apps Script, termina em /exec) que cria o rascunho completo (mensagem + assinatura) no Gmail de quem clica.
+// Veja apps-script/LEIAME-CONFIGURACAO.md. Vazia = o botão usa o modo "copiar e colar com Ctrl+V".
+const GMAIL_DRAFT_ENDPOINT = '';
 const LINK_PLACEHOLDER = '[ANEXAR A PASTA "01 | INSTRUMENTOS JURÍDICOS" COMO LINK: ícone do Google Drive > pesquisar "1. ATIVOS" > abrir a pasta do projeto > selecionar "01 | Instrumentos Jurídicos" > Adicionar como link. Depois apague esta linha]';
 
 /* Negrito "visual" para o Gmail: a URL de rascunho só aceita texto simples, então letras e números são trocados
@@ -1083,6 +1086,13 @@ function openEmailModal() {
   if (!validateAll()) return;
   renderEmailPreview();
   document.getElementById('em_projname').textContent = document.getElementById('f_proj').value.trim();
+  const auto = !!GMAIL_DRAFT_ENDPOINT;
+  document.getElementById('em_step_paste').style.display = auto ? 'none' : '';
+  document.getElementById('em_step_open').innerHTML = auto
+    ? 'Clique em <b>Criar rascunho no Gmail</b> (abaixo): abre uma aba com o rascunho <b>já com assunto, mensagem e a sua assinatura padrão</b>. Na primeira vez o Google pede autorização.'
+    : 'Clique em <b>Abrir Gmail</b> (abaixo): o assunto já vai escrito e a sua assinatura padrão é inserida pelo próprio Gmail. A mensagem (com negrito e destaque) fica copiada.';
+  document.getElementById('em_btn_main').textContent = auto ? 'Criar rascunho no Gmail' : 'Abrir Gmail';
+  document.getElementById('em_alt_help').style.display = auto ? 'none' : '';
   document.getElementById('mEmail').classList.add('show');
 }
 function closeEmailModal() { document.getElementById('mEmail').classList.remove('show'); }
@@ -1108,10 +1118,25 @@ function openGmailDraft() {
   showToast('✉️ Rascunho aberto no Gmail. Faltam a assinatura, a pasta do Drive, o PDF e os destinatários.', 'ok');
 }
 
+// Envia assunto + mensagem (HTML) ao Apps Script, que cria o rascunho no Gmail do usuário com a assinatura padrão dele.
+function postDraftToGmail(e) {
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = GMAIL_DRAFT_ENDPOINT; f.target = '_blank'; f.style.display = 'none';
+  [['subject', e.subject], ['html', e.html]].forEach(([k, v]) => {
+    const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i);
+  });
+  document.body.appendChild(f); f.submit(); f.remove();
+}
+
 // Opção 2 (negrito real): copia o corpo formatado (HTML) e abre o Gmail só com o assunto; o usuário cola no corpo (Ctrl+V).
 async function openGmailRichDraft() {
   const e = emailParts();
   if (!checkEmailLink(e)) return;
+  if (GMAIL_DRAFT_ENDPOINT) {   // modo automático: rascunho completo, sem colar
+    postDraftToGmail(e);
+    showToast('✉️ Criando o rascunho no seu Gmail (mensagem + assinatura)… Na aba que abrir, clique em “Abrir o rascunho no Gmail” se ele não abrir sozinho.', 'ok');
+    return;
+  }
   try {
     const item = new ClipboardItem({
       'text/html': new Blob([e.html], { type: 'text/html' }),
