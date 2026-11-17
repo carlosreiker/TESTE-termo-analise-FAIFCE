@@ -81,7 +81,7 @@
   <div class="fr2">
     <div class="fg">
       <label>Data prevista</label>
-      <input type="date" id="f_dtp" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required>
+      <div class="dwrap"><input type="text" id="f_dtp" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="formatDate(this); upd()" required><button type="button" class="calbtn" id="f_dtp_btn" onclick="pickDate('f_dtp')" title="Abrir calendário" aria-label="Abrir calendário">📅</button><input type="date" class="calhid" id="f_dtp_cal" min="2000-01-01" max="2099-12-31" tabindex="-1" aria-hidden="true" onchange="dateFromPicker('f_dtp')"></div>
       <div class="ni-row">
         <input type="checkbox" id="ni_dtp" onchange="toggleNI('ni_dtp','f_dtp','d_dtp',false)">
         <span onclick="document.getElementById('ni_dtp').click()">Não informado</span>
@@ -112,8 +112,8 @@
     <div class="fg"><label>Aplicação Financeira</label><input type="text" id="f_vaf" placeholder="R$ 0,00" oninput="mCurr(this); upd()" data-dest="d_vaf" required></div>
   </div>
   <div class="fr2">
-    <div class="fg"><label>Início da vigência</label><input type="date" id="f_iv" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
-    <div class="fg"><label>Término da vigência</label><input type="date" id="f_tv" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
+    <div class="fg"><label>Início da vigência</label><div class="dwrap"><input type="text" id="f_iv" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="formatDate(this); upd()" required><button type="button" class="calbtn" id="f_iv_btn" onclick="pickDate('f_iv')" title="Abrir calendário" aria-label="Abrir calendário">📅</button><input type="date" class="calhid" id="f_iv_cal" min="2000-01-01" max="2099-12-31" tabindex="-1" aria-hidden="true" onchange="dateFromPicker('f_iv')"></div></div>
+    <div class="fg"><label>Término da vigência</label><div class="dwrap"><input type="text" id="f_tv" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="formatDate(this); upd()" required><button type="button" class="calbtn" id="f_tv_btn" onclick="pickDate('f_tv')" title="Abrir calendário" aria-label="Abrir calendário">📅</button><input type="date" class="calhid" id="f_tv_cal" min="2000-01-01" max="2099-12-31" tabindex="-1" aria-hidden="true" onchange="dateFromPicker('f_tv')"></div></div>
   </div>
 
   <div class="sl">Rubricas</div>
@@ -148,7 +148,7 @@
 
   <div class="fr2" style="margin-top:10px">
     <div class="fg"><label>Responsável pela análise</label><input type="text" id="f_resp" placeholder="Nome completo" oninput="upd()" required></div>
-    <div class="fg"><label>Data</label><input type="date" id="f_data" min="2000-01-01" max="2099-12-31" onclick="openPicker(this)" oninput="upd()" onchange="upd()" required></div>
+    <div class="fg"><label>Data</label><div class="dwrap"><input type="text" id="f_data" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off" oninput="formatDate(this); upd()" required><button type="button" class="calbtn" id="f_data_btn" onclick="pickDate('f_data')" title="Abrir calendário" aria-label="Abrir calendário">📅</button><input type="date" class="calhid" id="f_data_cal" min="2000-01-01" max="2099-12-31" tabindex="-1" aria-hidden="true" onchange="dateFromPicker('f_data')"></div></div>
   </div>
 
 </aside>
@@ -265,11 +265,14 @@
     <div class="mi">✉️</div>
     <div class="mt" id="emTitle">Enviar Termo por e-mail (Gmail)</div>
     <div class="mm">Siga o passo a passo; esta janela fica aberta para você consultar enquanto usa o Gmail.</div>
+    <div class="fg em-prio"><label class="em-chk"><input type="checkbox" id="em_prio" onchange="renderEmailPreview()"> <b>Pedido Prioritário?</b></label>
+      <div class="em-help">Se marcado: o assunto começa com “PRIORITÁRIO - ” e a primeira linha do e-mail traz <b style="background:#ff0000;color:#000">&nbsp;PEDIDO PRIORITÁRIO&nbsp;</b>.</div>
+    </div>
     <div class="fg"><label>Passo a passo</label>
       <ol class="em-steps">
         <li>Gere o PDF do termo (botão <b>Gerar PDF</b> › salvar) para ter o arquivo pronto.</li>
-        <li>Clique em <b>Abrir rascunho no Gmail</b> (abaixo): o assunto e a mensagem já vêm preenchidos, com o nº do pedido e o projeto em negrito. O nome do projeto fica copiado.</li>
-        <li><b>Assinatura:</b> clique no final do texto, depois no ícone da caneta (<b>Inserir assinatura</b>) na barra inferior do Gmail e escolha a sua.</li>
+        <li>Clique em <b>Abrir Gmail</b> (abaixo): o assunto já vai escrito e a sua assinatura padrão é inserida pelo próprio Gmail. A mensagem (com negrito e destaque) fica copiada.</li>
+        <li><b>No Gmail, clique no corpo do e-mail (acima da assinatura) e cole com Ctrl+V.</b></li>
         <li>Ícone do <b>Google Drive</b> › Inserir arquivos com o Google Drive › pesquise <b>1. ATIVOS</b> › abra a pasta do projeto: <b id="em_projname"></b></li>
         <li>Selecione <b>01 | Instrumentos Jurídicos</b> › <b>Adicionar como link</b> e apague a linha entre colchetes.</li>
         <li>Anexe o PDF (clipe 📎 ou arrastando o arquivo) e informe os destinatários.</li>
@@ -282,15 +285,15 @@
     </div>
     <div class="fg"><label>Pré-visualização</label>
       <div class="em-sub" id="em_subject"></div>
-      <pre class="em-prev" id="em_body"></pre>
+      <div class="em-prev" id="em_body"></div>
     </div>
     <div class="ma">
       <button class="mc" onclick="closeEmailModal()">Fechar</button>
-      <button class="mf em-go" onclick="openGmailDraft()">Abrir rascunho no Gmail</button>
+      <button class="mf em-go" onclick="openGmailRichDraft()">Abrir Gmail</button>
     </div>
     <div class="em-help" style="margin-top:8px">
-      O Gmail não coloca a assinatura sozinho quando o rascunho já vem com texto, e o negrito desse modo é apenas visual (𝗮𝘀𝘀𝗶𝗺).
-      Prefere <b>negrito real e assinatura automática</b>? <button type="button" class="linkbtn" onclick="openGmailRichDraft()">Copiar o texto e abrir o Gmail só com o assunto</button>: depois clique no corpo e cole com Ctrl+V.
+      Por que é preciso colar? O Gmail só aceita texto simples em rascunhos abertos por link, e nesse modo ele não insere a assinatura. Texto formatado + assinatura só juntos com a colagem.
+      Alternativa sem colar (sem assinatura e sem o destaque vermelho): <button type="button" class="linkbtn" onclick="openGmailDraft()">abrir o rascunho já preenchido por link</button>.
     </div>
   </div>
 </div>

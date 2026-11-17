@@ -11,7 +11,7 @@ const currencyFields = [
 /* ── DATAS: os campos usam o calendário nativo (valor ISO aaaa-mm-dd); o documento e os rascunhos usam dd/mm/aaaa ── */
 const DATE_IDS = ['f_dtp', 'f_iv', 'f_tv', 'f_data'];
 const pad2 = n => String(n).padStart(2, '0');
-function todayISO() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function todayBR() { const d = new Date(); return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`; }   // data local (não UTC)
 function isoToBr(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; }
 function brToIso(br) {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br || '');
@@ -19,7 +19,26 @@ function brToIso(br) {
   const d = new Date(+m[3], +m[2] - 1, +m[1]);
   return (d.getFullYear() === +m[3] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[1]) ? `${m[3]}-${m[2]}-${m[1]}` : '';
 }
-function openPicker(input) { try { if (input.showPicker && !input.disabled) input.showPicker(); } catch (e) { /* o navegador pode recusar; o campo continua editável */ } }
+/* Campo de data = texto com máscara dd/mm/aaaa (digitável) + botão 📅 que abre o calendário nativo (input type=date oculto) */
+function pickDate(id) {
+  const field = document.getElementById(id), cal = document.getElementById(id + '_cal');
+  if (!field || !cal || field.disabled) return;
+  cal.value = brToIso(field.value);
+  try { if (cal.showPicker) { cal.showPicker(); return; } } catch (e) { /* cai no foco abaixo */ }
+  cal.focus();
+}
+function dateFromPicker(id) {
+  const field = document.getElementById(id), cal = document.getElementById(id + '_cal');
+  if (!field || !cal || !cal.value) return;
+  field.value = isoToBr(cal.value);
+  upd();
+}
+function checkDateFields() {   // data digitada incompleta ou inexistente (ex.: 31/02/2026) deixa o campo inválido
+  DATE_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setCustomValidity(el.value && !brToIso(el.value) ? 'Data inválida' : '');
+  });
+}
 
 const items = [];
 const rubrics = [];
@@ -46,7 +65,7 @@ function init() {
   addItem();
   addRubric();
   addSub();
-  document.getElementById('f_data').value = todayISO();
+  document.getElementById('f_data').value = todayBR();
   syncEstimado();
   upd();
   initDrafts();
@@ -63,13 +82,14 @@ function handleBeforeUnload(event) {
 }
 
 function upd() {
+  if (typeof checkDateFields === 'function') checkDateFields();
   if (typeof scheduleEmailButton === 'function') scheduleEmailButton();
   if (typeof scheduleDraftData === 'function') scheduleDraftData();
   syncFields.forEach(([sourceId, targetId]) => {
     const source = document.getElementById(sourceId);
     const target = document.getElementById(targetId);
     if (source && target) {
-      target.textContent = DATE_IDS.includes(sourceId) ? isoToBr(source.value) : (source.value.trim() || '');
+      target.textContent = source.value.trim() || '';
     }
   });
 
@@ -79,7 +99,7 @@ function upd() {
   });
 
   const dtpNI = document.getElementById('ni_dtp').checked;
-  document.getElementById('d_dtp').textContent = dtpNI ? 'Não informado' : isoToBr(document.getElementById('f_dtp').value);
+  document.getElementById('d_dtp').textContent = dtpNI ? 'Não informado' : (document.getElementById('f_dtp').value.trim() || '');
 
   const vestNI = document.getElementById('ni_vest').checked;
   const dVestWrap = document.getElementById('d_vest_wrap');
@@ -422,6 +442,8 @@ function toggleNI(checkboxId, fieldId, destId, isCurrency) {
   if (!checkbox || !field) return;
 
   field.disabled = checkbox.checked;
+  const calBtn = document.getElementById(fieldId + '_btn');
+  if (calBtn) calBtn.disabled = checkbox.checked;
   if (checkbox.checked) {
     field.value = '';
     field.classList.remove('invalid');
@@ -715,8 +737,9 @@ function doReset() {
     el.classList.remove('invalid');
     if (el.tagName === 'INPUT') el.disabled = false;
   });
-  document.getElementById('f_data').value = todayISO();
+  document.getElementById('f_data').value = todayBR();
   document.getElementById('ni_dtp').checked = false;
+  document.getElementById('f_dtp_btn').disabled = false;
   document.getElementById('ni_vest').checked = false;
   document.getElementById('d_vest_wrap').textContent = 'R$ ';
   const parecerEd = document.getElementById('parecerEd');
@@ -800,7 +823,7 @@ function initDrafts() {
 
 function buildDraft() {
   const campos = {};
-  Object.entries(DRAFT_TEXT).forEach(([key, id]) => { const v = document.getElementById(id).value; campos[key] = DATE_IDS.includes(id) ? isoToBr(v) : v; });
+  Object.entries(DRAFT_TEXT).forEach(([key, id]) => { campos[key] = document.getElementById(id).value; });
   return {
     formato: DRAFT_FORMAT,
     versao: DRAFT_VERSION,
@@ -905,7 +928,7 @@ function normalizeDraft(data) {
   Object.entries(DRAFT_TEXT).forEach(([key, id]) => {
     let value = txt(campos[key]);
     if (DRAFT_MONEY.includes(id)) value = fmtCurr(value);
-    if (DRAFT_DATES.includes(id)) value = brToIso(fmtDate(value));
+    if (DRAFT_DATES.includes(id)) value = fmtDate(value);
     fields[id] = value;
   });
 
@@ -973,11 +996,13 @@ function cleanParecer(html) {
 function applyDraft(d, name) {
   document.querySelectorAll('.fp .invalid').forEach(el => el.classList.remove('invalid'));
   Object.entries(d.fields).forEach(([id, value]) => { document.getElementById(id).value = value; });
-  if (!document.getElementById('f_data').value) document.getElementById('f_data').value = todayISO();
+  if (!document.getElementById('f_data').value) document.getElementById('f_data').value = todayBR();
   [['ni_dtp', 'f_dtp', d.niDtp], ['ni_vest', 'f_vest', d.niVest]].forEach(([checkId, fieldId, on]) => {
     const field = document.getElementById(fieldId);
     document.getElementById(checkId).checked = on;
     field.disabled = on;
+    const calBtn = document.getElementById(fieldId + '_btn');
+    if (calBtn) calBtn.disabled = on;
     if (on) field.value = '';
   });
   items.length = 0;
@@ -1023,9 +1048,12 @@ function emailParts() {
   const link = (document.getElementById('em_link').value || '').trim();
   const numTxt = num ? `${num}/2026` : '[N° DO PEDIDO]';
   const projTxt = proj || '[NOME DO PROJETO]';
-  const subject = `Termo de Análise - Pedido de Compra n° ${numTxt}`;
+  const prio = !!(document.getElementById('em_prio') && document.getElementById('em_prio').checked);
+  const subject = (prio ? 'PRIORITÁRIO - ' : '') + `Termo de Análise - Pedido de Compra n° ${numTxt}`;
   // t = texto comum, b = trecho em negrito; as mesmas linhas servem para as 3 versões (Unicode, HTML e texto simples)
-  const mk = (t, b, linkLine) => [
+  const PRIO = 'PEDIDO PRIORITÁRIO';
+  const mk = (t, b, linkLine, pr) => [
+    ...(prio ? [pr(PRIO), ''] : []),
     t('Prezados mentores!'),
     '',
     t('Encaminho, para sua análise e conhecimento, em anexo, o Termo de Análise n.º ') + b(numTxt) + t(', referente ao projeto ') + b(projTxt) + t(' e o termo de referência também o qual foi anexado a este pedido no sistema Conveniar.'),
@@ -1037,17 +1065,18 @@ function emailParts() {
     '',
   ];
   const id = x => x;
-  const body = mk(id, toBoldUnicode, link || LINK_PLACEHOLDER).join('\n');
-  const plain = mk(id, id, link || LINK_PLACEHOLDER).join('\n');
+  const body = mk(id, toBoldUnicode, link || LINK_PLACEHOLDER, toBoldUnicode).join('\n');
+  const plain = mk(id, id, link || LINK_PLACEHOLDER, id).join('\n');
   const linkHtml = link ? `<a href="${escHtml(link)}">${escHtml(link)}</a>` : `<b>${escHtml(LINK_PLACEHOLDER)}</b>`;
-  const html = mk(escHtml, x => `<b>${escHtml(x)}</b>`, linkHtml).map(l => l === '' ? '<div><br></div>' : `<div>${l}</div>`).join('');
+  const prioHtml = x => `<b><span style="background-color:#ff0000;color:#000000;">${escHtml(x)}</span></b>`;   // texto preto, negrito, fundo vermelho vivo
+  const html = mk(escHtml, x => `<b>${escHtml(x)}</b>`, linkHtml, prioHtml).map(l => l === '' ? '<div><br></div>' : `<div>${l}</div>`).join('');
   return { subject, body, plain, html, num, proj, link };
 }
 
 function renderEmailPreview() {
   const e = emailParts();
   document.getElementById('em_subject').textContent = e.subject;
-  document.getElementById('em_body').textContent = e.body;
+  document.getElementById('em_body').innerHTML = e.html;   // conteúdo já escapado em emailParts
 }
 
 function openEmailModal() {

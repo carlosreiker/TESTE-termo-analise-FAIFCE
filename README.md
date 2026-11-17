@@ -21,7 +21,7 @@ LICENSE
 1. Abra `index.html` em um navegador.
 2. Preencha os campos do pedido, projeto, itens, subitens e parecer. Em cada rubrica e subitem há o campo opcional **Meta/Etapa**, que só aparece no documento quando preenchido.
 3. **Valor estimado**: é a soma de `Quantidade × Valor Unitário` de cada item, atualizada ao vivo. Pode ser editado à mão; nesse caso o campo mostra a soma dos itens e o botão "Voltar ao automático".
-4. **Datas**: os campos de data abrem um calendário ao clicar. A data da análise (ao lado do responsável) vem preenchida com o dia de hoje e pode ser alterada.
+4. **Datas**: os campos de data aceitam digitação (a barra é colocada sozinha, formato dd/mm/aaaa) e também o calendário, pelo botão 📅 ao lado. Datas incompletas ou inexistentes (ex.: 31/02) deixam o campo inválido. A data da análise (ao lado do responsável) vem preenchida com o dia de hoje e pode ser alterada.
 5. **Gerar PDF** abre a impressão do navegador com o termo em A4 (margem de 10 mm em cima/embaixo e 12 mm nas laterais). O PDF carrega, em texto invisível, os dados do preenchimento (veja "Rascunhos").
 6. **Enviar e-mail**: abre um rascunho no Gmail com o modelo e os dados do pedido (veja abaixo).
 7. **Resetar** limpa todos os dados.
@@ -57,17 +57,15 @@ JSON legível, com `formato: "faifce-termo-analise"` e `versao: 2`. Ao abrir, o 
 
 ## Enviar e-mail (Gmail)
 
-O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela mostra o passo a passo e fica aberta enquanto você usa o Gmail:
+O botão **Enviar e-mail** só fica habilitado quando todos os campos obrigatórios estão preenchidos. A janela traz o campo **Pedido Prioritário?**: se marcado, o assunto começa com "PRIORITÁRIO - " e a primeira linha do e-mail é "PEDIDO PRIORITÁRIO" (texto preto, negrito, fundo vermelho vivo). Passo a passo (a janela fica aberta durante o uso do Gmail):
 
 1. **Gerar PDF** e salvar o arquivo.
-2. **Abrir rascunho no Gmail**: abre o Gmail com assunto e mensagem preenchidos (nº do pedido e projeto em negrito visual). O nome do projeto fica copiado.
-3. **Assinatura**: clique no final do texto e use o ícone da caneta (Inserir assinatura) do Gmail.
+2. **Abrir Gmail**: o assunto vai escrito, o Gmail insere a assinatura padrão de quem está logado, e a mensagem (com negrito real no nº do pedido e no projeto) fica copiada.
+3. No Gmail, clique no corpo (acima da assinatura) e cole com **Ctrl+V**.
 4. Ícone do Google Drive › pesquise **1. ATIVOS** › pasta do projeto › **01 | Instrumentos Jurídicos** › **Adicionar como link**; apague a linha de instrução entre colchetes.
 5. Anexe o PDF e informe os destinatários.
 
-Alternativa (link no rodapé da janela): copia o texto com negrito real e abre o Gmail só com o assunto, que então insere a assinatura sozinho; basta clicar no corpo e colar com Ctrl+V.
-
-Limites: o Gmail não coloca a assinatura quando o rascunho abre com texto pronto, não aceita negrito real em rascunhos abertos por link, e não deixa um site anexar arquivos nem inserir a pasta do Drive (só por API com login Google, não adotada). O "Atenciosamente," vem da assinatura do Gmail.
+Por que colar? O Gmail só aceita texto simples em rascunhos abertos por link, e nesse modo não insere a assinatura. Existe uma alternativa sem colar (link no rodapé da janela): o rascunho abre já preenchido, mas sem assinatura e sem o destaque vermelho (o título prioritário vai só em negrito visual). Deixar tudo 100% automático (texto formatado + assinatura + anexo) só é possível com a API do Gmail e login Google, não adotada.
 
 ## Publicação
 
